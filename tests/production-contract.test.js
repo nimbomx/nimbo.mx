@@ -32,4 +32,31 @@ describe("contrato productivo de Nginx", () => {
     expect(healthLocation).toBeDefined();
     expect(healthLocation).toMatch(/return\s+200\s+"ok\\n";/);
   });
+
+  test("incluye las rutas editoriales y los formatos visuales del sitio noir", async () => {
+    const [dockerfile, nginx] = await Promise.all([
+      read("Dockerfile"),
+      read("nginx.conf")
+    ]);
+
+    expect(dockerfile).toContain(
+      "COPY --chown=nginx:nginx laboratorio/ /usr/share/nginx/html/laboratorio/"
+    );
+    expect(dockerfile).toContain(
+      "COPY --chown=nginx:nginx assets/ /usr/share/nginx/html/assets/"
+    );
+    expect(nginx).toContain("(?:css|js|svg|png|webp)");
+    expect(nginx).toMatch(
+      /location ~\* \\\.\(\?:css\|js\|svg\|png\|webp\)\$/
+    );
+    expect(nginx).toContain("try_files $uri $uri/ =404");
+  });
+
+  test("protege el directorio de assets y conserva el 404 editorial", async () => {
+    const nginx = await read("nginx.conf");
+
+    expect(nginx).toMatch(/location = \/assets\/\s*\{\s*return 404;\s*\}/);
+    expect(nginx).toContain("error_page 404 /404.html");
+    expect(nginx).toMatch(/location = \/404\.html\s*\{\s*internal;\s*\}/);
+  });
 });

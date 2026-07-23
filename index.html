@@ -1,42 +1,42 @@
 <!doctype html>
-<html lang="es-MX">
+<html lang="es-MX" data-motion="pending">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nimbo — Producto digital, nube e inteligencia artificial</title>
-  <meta name="description" content="Práctica profesional independiente para diseñar y construir productos digitales, plataformas de nube, automatización, inteligencia artificial y agentes con criterio técnico y de negocio.">
+  <title>Nimbo — Construir también es investigar</title>
+  <meta name="description" content="Un archivo vivo de proyectos digitales, decisiones técnicas y aprendizajes. Nimbo documenta cómo se construyen sistemas y asistentes útiles.">
   <meta name="robots" content="index, follow">
   <meta name="author" content="Nimbo">
-  <meta name="theme-color" content="#f2f0e9">
+  <meta name="theme-color" content="#050505">
   <link rel="canonical" href="https://nimbo.mx/">
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/styles.css">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="es_MX">
   <meta property="og:site_name" content="Nimbo">
-  <meta property="og:title" content="Nimbo — Tecnología útil, construida con criterio">
-  <meta property="og:description" content="Producto digital, nube, inteligencia artificial, agentes, automatización, infraestructura y estrategia.">
+  <meta property="og:title" content="Nimbo — Construir también es investigar">
+  <meta property="og:description" content="Proyectos, decisiones y aprendizajes desde el archivo abierto de Nimbo.">
   <meta property="og:url" content="https://nimbo.mx/">
-  <meta property="og:image" content="https://nimbo.mx/assets/og-image.svg">
-  <meta property="og:image:type" content="image/svg+xml">
+  <meta property="og:image" content="https://nimbo.mx/assets/og-image.png">
+  <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Nimbo: tecnología útil, construida con criterio">
+  <meta property="og:image:alt" content="Nimbo: construir también es investigar">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Nimbo — Tecnología útil, construida con criterio">
-  <meta name="twitter:description" content="Práctica profesional de producto digital, nube e inteligencia artificial.">
-  <meta name="twitter:image" content="https://nimbo.mx/assets/og-image.svg">
-  <meta name="twitter:image:alt" content="Nimbo: tecnología útil, construida con criterio">
+  <meta name="twitter:title" content="Nimbo — Construir también es investigar">
+  <meta name="twitter:description" content="Un archivo vivo de proyectos digitales, decisiones técnicas y aprendizajes.">
+  <meta name="twitter:image" content="https://nimbo.mx/assets/og-image.png">
+  <meta name="twitter:image:alt" content="Nimbo: construir también es investigar">
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "ProfessionalService",
-      "@id": "https://nimbo.mx/#servicio",
+      "@id": "https://nimbo.mx/#estudio",
       "name": "Nimbo",
       "url": "https://nimbo.mx/",
       "logo": "https://nimbo.mx/assets/favicon.svg",
-      "image": "https://nimbo.mx/assets/og-image.svg",
-      "description": "Práctica profesional independiente de producto digital, nube, inteligencia artificial, agentes, automatización, infraestructura y estrategia.",
+      "image": "https://nimbo.mx/assets/og-image.png",
+      "description": "Práctica profesional independiente que documenta la construcción de productos digitales, asistentes, automatización y sistemas de conocimiento.",
       "email": "contacto@nimbo.mx",
       "areaServed": {
         "@type": "Country",
@@ -44,212 +44,198 @@
       },
       "knowsAbout": [
         "Producto digital",
-        "Computación en la nube",
-        "Inteligencia artificial",
-        "Agentes de software",
+        "Asistentes de inteligencia artificial",
         "Automatización",
+        "Sistemas de conocimiento",
         "Infraestructura digital",
-        "Estrategia tecnológica"
-      ],
-      "sameAs": []
+        "Documentación de producto"
+      ]
     }
   </script>
 </head>
-<body>
+<body class="home-page">
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
-  <header class="site-header">
-    <a class="brand" href="/" aria-label="Nimbo, inicio">
-      <svg aria-hidden="true" viewBox="0 0 36 24" width="36" height="24">
-        <path d="M4 19h25.5a4.5 4.5 0 0 0 .4-9A8 8 0 0 0 15 7.6 6 6 0 0 0 4 11a4 4 0 0 0 0 8Z" fill="currentColor"/>
-      </svg>
-      <span>nimbo</span>
-    </a>
-    <nav aria-label="Navegación principal">
+  <div class="film-layer" data-film-layer aria-hidden="true"></div>
+
+  <header class="site-header site-header--dark">
+    <a class="wordmark" href="/" aria-label="Nimbo, inicio">NIMBO</a>
+    <nav class="site-nav" aria-label="Navegación principal">
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-list">
-        <span class="nav-toggle-label">Menú</span>
-        <span aria-hidden="true">↗</span>
+        <span>Menú</span><span aria-hidden="true">↗</span>
       </button>
       <ul id="nav-list" class="nav-list">
         <li><a href="#trayectoria">Trayectoria</a></li>
+        <li><a href="/laboratorio/">Laboratorio</a></li>
         <li><a href="#practica">Práctica</a></li>
-        <li><a href="#colaboracion">Colaboración</a></li>
-        <li><a class="nav-contact" href="mailto:contacto@nimbo.mx">Escribir</a></li>
+        <li><a href="#contacto">Contacto</a></li>
       </ul>
     </nav>
+    <button class="motion-toggle" type="button" aria-pressed="false" data-motion-toggle>
+      <span>Movimiento</span>
+      <span data-motion-state>Auto</span>
+    </button>
   </header>
 
   <main id="contenido">
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-kicker">
-        <span class="status-dot" aria-hidden="true"></span>
-        Práctica independiente · México / remoto
-      </div>
-      <h1 id="hero-title">Tecnología útil,<br><em>construida con criterio.</em></h1>
-      <div class="hero-footer">
-        <p>Ayudo a convertir problemas complejos en productos, plataformas y sistemas que las personas pueden entender, operar y hacer crecer.</p>
-        <a class="text-link" href="#practica">Explorar la práctica <span aria-hidden="true">↓</span></a>
-      </div>
-      <div class="hero-orbit" aria-hidden="true">
-        <span class="orbit orbit-one"></span>
-        <span class="orbit orbit-two"></span>
-        <span class="orbit-core">N</span>
-      </div>
-    </section>
-
-    <section id="trayectoria" class="section section-story" aria-labelledby="story-title">
-      <div class="section-label">
-        <span>01</span>
-        <p>Trayectoria</p>
-      </div>
-      <div class="story-content">
-        <h2 id="story-title">De operar infraestructura a diseñar productos con inteligencia.</h2>
-        <div class="story-columns">
-          <p>Esta práctica nace de años de trabajo real entre tecnología y negocio: construyendo producto digital, llevando servicios a la nube, automatizando operaciones y tomando decisiones de arquitectura que deben sostenerse más allá de una demostración.</p>
-          <p>El recorrido incluye infraestructura, plataformas, datos, inteligencia artificial y agentes. No como temas aislados, sino como capas de un mismo sistema. La prioridad es siempre comprender el contexto, reducir incertidumbre y dejar capacidad instalada en el equipo.</p>
+    <section class="cinema-hero" aria-labelledby="hero-title">
+      <div class="hero-beam" aria-hidden="true"></div>
+      <p class="hero-kicker">Nimbo presenta · Archivo en movimiento</p>
+      <h1 id="hero-title" class="cinema-title">
+        <span>Construir</span>
+        <span>también es</span>
+        <span>investigar.</span>
+      </h1>
+      <figure class="hero-still">
+        <img src="/assets/images/hero-projection.webp" alt="Hombre delgado de cabello ondulado y lentes, visto de espaldas bajo la luz de un proyector" width="1672" height="941">
+        <figcaption>Prueba de luz · La tecnología también tiene fuera de campo.</figcaption>
+      </figure>
+      <div class="hero-intro">
+        <p>Construimos sistemas digitales y abrimos el proceso: la pregunta inicial, las decisiones, los errores y aquello que todavía falta por resolver.</p>
+        <div class="hero-actions">
+          <a class="action-link action-link--light" href="/laboratorio/">Entrar al laboratorio <span aria-hidden="true">↗</span></a>
+          <a class="text-link text-link--light" href="#manifiesto">Leer el manifiesto <span aria-hidden="true">↓</span></a>
         </div>
-        <blockquote>
-          <p>“La buena tecnología no busca impresionar. Busca resolver, durar y dejar el camino más claro.”</p>
-        </blockquote>
       </div>
+      <p class="frame-id" aria-hidden="true">NMB · 35 MM · 000128</p>
     </section>
 
-    <section id="practica" class="section practice" aria-labelledby="practice-title">
-      <div class="section-label light">
-        <span>02</span>
-        <p>Áreas de trabajo</p>
+    <section id="manifiesto" class="manifesto section-dark" aria-labelledby="manifesto-title">
+      <div class="section-index">
+        <span>Escena 01</span>
+        <span>Manifiesto</span>
       </div>
-      <div class="practice-heading">
-        <h2 id="practice-title">Una práctica que conecta estrategia, construcción y operación.</h2>
-        <p>La combinación exacta depende del problema. Estas son las capacidades que normalmente entran en juego.</p>
-      </div>
-      <div class="capability-list">
-        <article>
-          <span class="capability-number">01</span>
-          <div>
-            <h3>Producto digital</h3>
-            <p>Descubrimiento, definición, arquitectura y evolución de productos web y servicios digitales. De una idea ambigua a una experiencia que entrega valor.</p>
-          </div>
-          <span class="capability-mark" aria-hidden="true">↗</span>
-        </article>
-        <article>
-          <span class="capability-number">02</span>
-          <div>
-            <h3>Nube e infraestructura</h3>
-            <p>Plataformas seguras, observables y razonables de operar. Migraciones, modernización, confiabilidad, costos y prácticas de entrega.</p>
-          </div>
-          <span class="capability-mark" aria-hidden="true">↗</span>
-        </article>
-        <article>
-          <span class="capability-number">03</span>
-          <div>
-            <h3>IA, agentes y automatización</h3>
-            <p>Casos de uso con propósito, prototipos evaluables e integración responsable en flujos reales, con personas al centro y límites explícitos.</p>
-          </div>
-          <span class="capability-mark" aria-hidden="true">↗</span>
-        </article>
-        <article>
-          <span class="capability-number">04</span>
-          <div>
-            <h3>Estrategia tecnológica</h3>
-            <p>Decisiones de inversión, arquitectura y organización traducidas a rutas ejecutables. Sin recetas universales ni complejidad innecesaria.</p>
-          </div>
-          <span class="capability-mark" aria-hidden="true">↗</span>
-        </article>
-      </div>
-    </section>
-
-    <section class="section problems" aria-labelledby="problems-title">
-      <div class="section-label">
-        <span>03</span>
-        <p>Problemas concretos</p>
-      </div>
-      <div class="problems-content">
-        <div class="problems-heading">
-          <h2 id="problems-title">¿En qué puedo ayudar?</h2>
-          <p>No todo necesita una transformación. A veces hace falta una decisión clara, un primer sistema bien hecho o destrabar un equipo.</p>
+      <div class="manifesto-copy">
+        <p class="eyebrow">El proceso también es la obra</p>
+        <h2 id="manifesto-title">Hacer visible lo que ocurre detrás.</h2>
+        <div class="editorial-columns">
+          <p>No nos interesa mostrar únicamente una pieza terminada. Nos interesa conservar las preguntas que la hicieron posible.</p>
+          <p>Cada proyecto deja un rastro: hipótesis, decisiones, pruebas, errores y hallazgos. Nimbo reúne ese rastro para convertirlo en memoria útil.</p>
+          <p>Documentar no es narrar una victoria después de que ocurre. Es pensar con mayor claridad mientras el trabajo sigue abierto.</p>
         </div>
-        <ul class="problem-grid">
-          <li>
-            <span aria-hidden="true">A</span>
-            <p>Convertir un proceso manual y frágil en una herramienta interna confiable.</p>
-          </li>
-          <li>
-            <span aria-hidden="true">B</span>
-            <p>Encontrar un uso viable de IA antes de invertir en una solución más grande.</p>
-          </li>
-          <li>
-            <span aria-hidden="true">C</span>
-            <p>Diseñar un agente con evaluación, trazabilidad y puntos de control humanos.</p>
-          </li>
-          <li>
-            <span aria-hidden="true">D</span>
-            <p>Modernizar una plataforma que se volvió lenta, costosa o difícil de cambiar.</p>
-          </li>
-          <li>
-            <span aria-hidden="true">E</span>
-            <p>Alinear producto, ingeniería y operación alrededor de una ruta compartida.</p>
-          </li>
-          <li>
-            <span aria-hidden="true">F</span>
-            <p>Revisar una arquitectura antes de tomar una decisión difícil de revertir.</p>
-          </li>
-        </ul>
+        <p class="manifesto-line">Menos demostración. Más evidencia.</p>
       </div>
     </section>
 
-    <section id="colaboracion" class="section collaboration" aria-labelledby="collaboration-title">
-      <div class="section-label">
-        <span>04</span>
-        <p>Forma de colaboración</p>
+    <section id="trayectoria" class="trajectory section-paper" aria-labelledby="trajectory-title">
+      <div class="section-index section-index--ink">
+        <span>Archivo 02</span>
+        <span>Trayectoria</span>
       </div>
-      <div class="collaboration-content">
-        <h2 id="collaboration-title">Trabajo cercano, alcance claro y evidencia frecuente.</h2>
-        <div class="modes">
-          <article>
-            <p class="mode-type">Orientar</p>
-            <h3>Sesión de trabajo</h3>
-            <p>Para ordenar un problema, revisar opciones y salir con criterios y siguientes pasos concretos.</p>
-          </article>
-          <article>
-            <p class="mode-type">Definir</p>
-            <h3>Diagnóstico y ruta</h3>
-            <p>Una exploración acotada para entender el sistema, identificar riesgos y proponer una ruta priorizada.</p>
-          </article>
-          <article>
-            <p class="mode-type">Construir</p>
-            <h3>Proyecto por etapas</h3>
-            <p>Diseño e implementación con entregas pequeñas, documentación útil y transferencia al equipo.</p>
-          </article>
-          <article>
-            <p class="mode-type">Acompañar</p>
-            <h3>Asesoría continua</h3>
-            <p>Apoyo periódico a liderazgo y equipos para tomar decisiones y sostener el avance.</p>
-          </article>
+      <div class="trajectory-layout">
+        <div>
+          <p class="eyebrow eyebrow--ink">Una práctica, no una biografía</p>
+          <h2 id="trajectory-title">Los proyectos cuentan mejor el recorrido.</h2>
         </div>
-        <p class="principle">Si no soy la persona adecuada para el problema, también lo diré con claridad.</p>
+        <div class="trajectory-copy">
+          <p>La práctica nace de años de trabajo real entre tecnología y negocio: construyendo producto digital, llevando servicios a la nube, automatizando operaciones y tomando decisiones de arquitectura que deben sostenerse más allá de una demostración.</p>
+          <p>El recorrido cruza producto, infraestructura, datos, asistentes e inteligencia artificial como capas de un mismo sistema. Cada expediente mostrará qué se intentó, por qué se tomó una decisión y qué cambió al confrontarla con la realidad.</p>
+        </div>
+        <ol class="trajectory-reels" aria-label="Ejes de experiencia">
+          <li><span>01</span> Producto como sistema</li>
+          <li><span>02</span> Automatización con criterio</li>
+          <li><span>03</span> Conocimiento que deja rastro</li>
+        </ol>
       </div>
     </section>
 
-    <section id="contacto" class="contact" aria-labelledby="contact-title">
-      <p class="contact-overline">Una buena conversación puede ser el primer prototipo.</p>
-      <h2 id="contact-title">Hablemos de lo que <br> quieres <em>hacer posible.</em></h2>
-      <a class="contact-link" href="mailto:contacto@nimbo.mx">
+    <section class="laboratory-preview" aria-labelledby="laboratory-title">
+      <header class="laboratory-heading">
+        <div>
+          <p class="eyebrow eyebrow--ink">Laboratorio · Material en proceso</p>
+          <h2 id="laboratory-title">Aquí se ve cómo se construye.</h2>
+        </div>
+        <p>El Laboratorio sigue proyectos mientras todavía están cambiando. No es una vitrina de casos terminados: es una mesa de trabajo.</p>
+      </header>
+
+      <div class="contact-sheet" aria-label="Hoja de contacto del expediente nimbo.pro">
+        <article class="lab-dossier">
+          <div class="dossier-copy">
+            <p class="dossier-label">Expediente 001 · En curso</p>
+            <h3>nimbo.pro</h3>
+            <p>Una experiencia digital con un asistente conectado a Telegram. El proyecto explorará cómo convertir preguntas reales en conocimiento revisable y extender la conversación a nuevos canales.</p>
+            <dl class="status-list">
+              <div><dt>Telegram</dt><dd>En trabajo</dd></div>
+              <div><dt>WhatsApp</dt><dd>Siguiente etapa</dd></div>
+              <div><dt>Conocimiento</dt><dd>Hipótesis en diseño</dd></div>
+            </dl>
+            <a class="action-link action-link--ink" href="/laboratorio/nimbo-pro/">Ver expediente <span aria-hidden="true">↗</span></a>
+          </div>
+
+          <div class="film-strip">
+            <figure class="contact-frame contact-frame--large">
+              <img src="/assets/images/lab-wiring.webp" alt="Manos conectando cableado entre una consola y un panel electromecánico" loading="lazy" width="1536" height="1024">
+              <figcaption><span>Toma 01 · Señal</span><span>00:01:18:08</span></figcaption>
+            </figure>
+            <figure class="contact-frame">
+              <img src="/assets/images/lab-terminal.webp" alt="Terminal y libreta iluminadas por una luz lateral intensa" loading="lazy" width="1536" height="1024">
+              <figcaption><span>Toma 11 · Memoria</span><span>00:03:42:16</span></figcaption>
+            </figure>
+            <figure class="contact-frame">
+              <img src="/assets/images/hero-projection.webp" alt="" loading="lazy" width="1672" height="941">
+              <figcaption><span>Toma 24 · Evidencia</span><span>00:07:09:04</span></figcaption>
+            </figure>
+          </div>
+        </article>
+
+        <div class="editing-notes" aria-label="Marcas de lectura del laboratorio">
+          <div><span>01</span><strong>Problema</strong><p>¿Qué necesita realmente la conversación?</p></div>
+          <div><span>02</span><strong>Decisión</strong><p>¿Qué elegimos y bajo qué criterio?</p></div>
+          <div><span>03</span><strong>Hallazgo</strong><p>¿Qué evidencia cambió el guion?</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="practica" class="practice section-dark" aria-labelledby="practice-title">
+      <div class="section-index">
+        <span>Escena 04</span>
+        <span>Experiencia aplicada</span>
+      </div>
+      <div class="practice-intro">
+        <p class="eyebrow">Sin catálogo</p>
+        <h2 id="practice-title">A veces, el archivo se convierte en colaboración.</h2>
+        <p>Nimbo no parte de un menú cerrado de servicios. Cuando un problema se parece a algo que ya hemos investigado, esa experiencia puede convertirse en diagnóstico, acompañamiento o construcción conjunta.</p>
+      </div>
+      <div class="practice-cards">
+        <article>
+          <span>01</span>
+          <h3>Asistentes con contexto</h3>
+          <p>Canales, fuentes de conocimiento, herramientas y criterios de revisión reunidos en un sistema operable.</p>
+        </article>
+        <article>
+          <span>02</span>
+          <h3>Sistemas de conocimiento</h3>
+          <p>Estructuras para registrar preguntas, conservar decisiones y mantener respuestas que puedan revisarse.</p>
+        </article>
+        <article>
+          <span>03</span>
+          <h3>Prototipos e integraciones</h3>
+          <p>Experimentos funcionales que conectan producto, automatización e infraestructura antes de escalar.</p>
+        </article>
+        <article>
+          <span>04</span>
+          <h3>Documentación de producto</h3>
+          <p>Bitácoras y mapas de decisión para comprender cómo se construyó un sistema y qué sigue pendiente.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="contacto" class="end-credits" aria-labelledby="contact-title">
+      <p class="eyebrow">Créditos · Una conversación abierta</p>
+      <h2 id="contact-title">La siguiente escena puede empezar con una pregunta.</h2>
+      <p>Cuéntanos qué estás intentando construir, dónde se detuvo o qué todavía no puedes explicar con claridad.</p>
+      <a class="credits-mail" href="mailto:contacto@nimbo.mx">
         <span>contacto@nimbo.mx</span>
         <span aria-hidden="true">↗</span>
       </a>
     </section>
   </main>
 
-  <footer>
-    <a class="brand footer-brand" href="/" aria-label="Nimbo, inicio">
-      <svg aria-hidden="true" viewBox="0 0 36 24" width="36" height="24">
-        <path d="M4 19h25.5a4.5 4.5 0 0 0 .4-9A8 8 0 0 0 15 7.6 6 6 0 0 0 4 11a4 4 0 0 0 0 8Z" fill="currentColor"/>
-      </svg>
-      <span>nimbo</span>
-    </a>
-    <p>Producto · Nube · Inteligencia</p>
-    <p>© <span id="year">2026</span> Nimbo</p>
+  <footer class="site-footer site-footer--dark">
+    <a class="wordmark" href="/" aria-label="Nimbo, inicio">NIMBO</a>
+    <p>Sistemas · Procesos · Conocimiento</p>
+    <p>© <span data-year>2026</span></p>
   </footer>
+
   <script src="/script.js" defer></script>
 </body>
 </html>

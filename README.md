@@ -1,33 +1,51 @@
 # nimbo.mx
 
-Primera versión productiva del sitio profesional de Nimbo. Es un sitio estático en español, construido sin frameworks, dependencias de cliente, CDNs ni recursos externos.
+Sitio editorial de Nimbo: trayectoria, práctica profesional y un Laboratorio abierto
+que documenta proyectos, decisiones y aprendizajes mientras siguen en construcción.
+
+La portada usa el lenguaje visual **Cámara oscura** y el Laboratorio funciona como una
+**Sala de montaje**. Las fotografías y la textura de película son assets originales.
+La capa decorativa WebGL usa Three.js y se desactiva cuando el sistema solicita
+movimiento reducido, el navegador activa ahorro de datos o WebGL no está disponible.
+La procedencia y los prompts exactos de los assets están en
+[`IMAGEGEN.md`](IMAGEGEN.md).
 
 ## Desarrollo
 
-Se necesita [Bun](https://bun.sh/) para las tareas locales. El sitio no requiere instalación de paquetes.
+Se necesita [Bun](https://bun.sh/). Instala las dependencias y genera el bundle local:
 
 ```bash
-bunx serve .
+bun install --frozen-lockfile
+bun run build:assets
+bun run dev
 ```
 
-Abre `http://localhost:3000` (o el puerto que reporte el servidor). También se puede usar cualquier servidor HTTP estático; abrir los archivos con `file://` no reproduce correctamente las rutas absolutas.
+Abre la URL que reporte el servidor. El sitio es estático y no requiere secretos ni
+variables de entorno.
+
+## Estructura
+
+- `/`: manifiesto, trayectoria, Laboratorio y práctica.
+- `/laboratorio/`: índice de expedientes.
+- `/laboratorio/nimbo-pro/`: primera bitácora serial.
+- `src/film-layer.js`: textura animada, partículas y fallbacks.
+- `assets/images/`: fotografía y textura optimizadas para web.
 
 ## Pruebas
 
-La suite comprueba la estructura semántica, contenido esencial, metadata, enlaces internos, recursos locales, archivos operativos, configuración de seguridad y whitespace.
+La suite verifica estructura semántica, contenido, metadata, navegación, rutas,
+recursos locales, movimiento reducido, seguridad y contrato productivo:
 
 ```bash
-bun test
+bun run check
 ```
-
-Las pruebas no tienen dependencias de terceros.
 
 ## Build
 
-La imagen sirve los archivos con Nginx sin privilegios en el puerto 8080.
+La imagen sirve los archivos con Nginx sin privilegios en el puerto 8080:
 
 ```bash
-docker build -t nimbo-mx .
+bun run build
 docker run --rm -p 8080:8080 nimbo-mx
 ```
 
@@ -35,17 +53,18 @@ Comprueba el servicio con `curl http://localhost:8080/health`; debe responder `o
 
 ## Producción
 
-El despliegue canónico se realiza en Dokploy. El contenedor HTTP escucha en el puerto `8080`, el endpoint de salud es `/health` y los dominios públicos son `nimbo.mx` y `www.nimbo.mx`.
+El despliegue canónico se realiza en Dokploy. El contenedor HTTP escucha en el puerto
+`8080`, el endpoint de salud es `/health` y los únicos dominios públicos son
+`nimbo.mx` y `www.nimbo.mx`.
 
 ## Despliegue
 
-Publica la imagen en un servicio de contenedores que termine TLS para `nimbo.mx` y enrute el tráfico al puerto 8080. Configura el health check en `/health`. El sitio presupone HTTPS y su canonical es `https://nimbo.mx/`.
-
 Antes de liberar una versión:
 
-1. Ejecuta `bun test`.
+1. Ejecuta `bun run check`.
 2. Construye la imagen.
-3. Verifica la portada, la navegación por teclado, la vista móvil y una URL inexistente.
-4. Confirma que `/health`, `/robots.txt` y `/sitemap.xml` respondan correctamente.
+3. Verifica portada, Laboratorio, expediente, navegación por teclado y vista móvil.
+4. Confirma el modo de movimiento reducido y la ausencia de errores WebGL.
+5. Comprueba `/health`, `/robots.txt`, `/sitemap.xml` y una URL inexistente.
 
-No hay secretos ni variables de entorno requeridas. El despliegue no forma parte de este repositorio.
+El sitio presupone HTTPS y su canonical es `https://nimbo.mx/`.
