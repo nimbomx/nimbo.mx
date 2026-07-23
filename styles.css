@@ -6,6 +6,7 @@
   --night: #102321;
   --acid: #c9ff46;
   --blue: #615cff;
+  --blue-text: #504adf;
   --line: rgba(20, 41, 39, 0.2);
   --max: 1240px;
   --pad: clamp(1.25rem, 4vw, 4.5rem);
@@ -257,7 +258,7 @@ main {
 }
 
 .section-label span {
-  color: var(--blue);
+  color: var(--blue-text);
 }
 
 .section-label p {
@@ -348,10 +349,13 @@ blockquote p {
 
 .capability-number,
 .mode-type {
-  color: var(--acid);
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.1em;
+}
+
+.capability-number {
+  color: var(--acid);
 }
 
 .capability-list h3 {
@@ -418,7 +422,7 @@ blockquote p {
   border: 1px solid var(--blue);
   border-radius: 50%;
   place-items: center;
-  color: var(--blue);
+  color: var(--blue-text);
   font-size: 0.7rem;
   font-weight: 700;
 }
@@ -466,7 +470,7 @@ blockquote p {
 
 .mode-type {
   margin: 0;
-  color: var(--blue);
+  color: var(--blue-text);
   text-transform: uppercase;
 }
 

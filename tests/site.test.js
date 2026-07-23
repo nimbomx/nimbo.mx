@@ -48,7 +48,12 @@ describe("metadata y descubrimiento", () => {
     expect(html).toContain('property="og:title"');
     expect(html).toContain('property="og:description"');
     expect(html).toContain('property="og:image"');
+    expect(html).toContain('property="og:image:type" content="image/svg+xml"');
+    expect(html).toContain('property="og:image:width" content="1200"');
+    expect(html).toContain('property="og:image:height" content="630"');
+    expect(html).toContain('property="og:image:alt" content="Nimbo: tecnología útil, construida con criterio"');
     expect(html).toContain('name="twitter:card"');
+    expect(html).toContain('name="twitter:image:alt" content="Nimbo: tecnología útil, construida con criterio"');
     expect(html).toContain('type="application/ld+json"');
     expect(html).toContain('"@type": "ProfessionalService"');
     expect(html).not.toContain('"@type": "Person"');
@@ -226,6 +231,119 @@ describe("accesibilidad", () => {
     expect(targetRule).toMatch(/min-height:\s*44px;/);
     expect(mobile).toMatch(/\.text-link\s*{[^}]*display:\s*inline-flex;/);
   });
+  test("usa azul oscuro con contraste AA real en todas las etiquetas pequeñas sobre papel", async () => {
+    const css = await read("styles.css");
+    const blue = css.match(/--blue:\s*(#[\da-f]{6})/i)?.[1];
+    const blueText = css.match(/--blue-text:\s*(#[\da-f]{6})/i)?.[1];
+    const paper = css.match(/--paper:\s*(#[\da-f]{6})/i)?.[1];
+    const paperDeep = css.match(/--paper-deep:\s*(#[\da-f]{6})/i)?.[1];
+    const sectionLabel = css.match(/\.section-label span\s*{([^}]*)}/)?.[1];
+    const problemLabel = css.match(/\.problem-grid span\s*{([^}]*)}/)?.[1];
+    const modeType = css.match(/\.mode-type\s*{([^}]*)}/g)?.at(-1);
+
+    expect(blue).toBe("#615cff");
+    expect(blueText).toBe("#504adf");
+    expect(sectionLabel).toMatch(/color:\s*var\(--blue-text\);/);
+    expect(problemLabel).toMatch(/color:\s*var\(--blue-text\);/);
+    expect(problemLabel).toMatch(/border:\s*1px solid var\(--blue\);/);
+    expect(modeType).toMatch(/color:\s*var\(--blue-text\);/);
+    expect(css).toMatch(/\.contact\s*{[^}]*background:\s*var\(--blue\);/s);
+
+    const labelPairs = [
+      ["numeración de sección", blueText, paper],
+      ["letras de problemas", blueText, paper],
+      ["numeración de colaboración", blueText, paperDeep],
+      ["tipos de colaboración", blueText, paperDeep]
+    ];
+
+    for (const [label, foreground, background] of labelPairs) {
+      expect(contrast(foreground, background), label).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  test("Escape cierra el menú abierto, sincroniza su estado y devuelve el foco", async () => {
+    const script = await read("script.js");
+    const makeElement = () => {
+      const listeners = {};
+      const classes = new Set();
+      return {
+        attributes: new Map(),
+        focusCalls: 0,
+        listeners,
+        addEventListener(type, listener) {
+          listeners[type] = listener;
+        },
+        getAttribute(name) {
+          return this.attributes.get(name) ?? null;
+        },
+        setAttribute(name, value) {
+          this.attributes.set(name, value);
+        },
+        focus() {
+          this.focusCalls += 1;
+        },
+        classList: {
+          contains(name) {
+            return classes.has(name);
+          },
+          remove(name) {
+            classes.delete(name);
+          },
+          toggle(name, force) {
+            if (force) classes.add(name);
+            else classes.delete(name);
+          }
+        }
+      };
+    };
+
+    const toggle = makeElement();
+    const nav = makeElement();
+    const documentListeners = {};
+    toggle.setAttribute("aria-expanded", "false");
+    const fakeDocument = {
+      querySelector(selector) {
+        if (selector === ".nav-toggle") return toggle;
+        if (selector === "#nav-list") return nav;
+        return null;
+      },
+      addEventListener(type, listener) {
+        documentListeners[type] = listener;
+      }
+    };
+
+    new Function("document", script)(fakeDocument);
+
+    toggle.listeners.click();
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(nav.classList.contains("is-open")).toBe(true);
+
+    documentListeners.keydown({ key: "Escape" });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(nav.classList.contains("is-open")).toBe(false);
+    expect(toggle.focusCalls).toBe(1);
+
+    toggle.listeners.click();
+    nav.listeners.click({ target: { closest: (selector) => selector === "a" } });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(nav.classList.contains("is-open")).toBe(false);
+    expect(toggle.focusCalls).toBe(1);
+  });
+
+  test("el salto de línea del encabezado de contacto conserva separación textual", async () => {
+    const html = await read("index.html");
+    const heading = html.match(/<h2 id="contact-title">([\s\S]*?)<\/h2>/)?.[1];
+
+    expect(heading).toBeDefined();
+    expect(heading).toMatch(/lo que\s+<br>\s+quieres/);
+    const accessibleText = heading
+      .replace(/<br\s*\/?>/gi, " ")
+      .replace(/<[^>]+>/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    expect(accessibleText).toBe("Hablemos de lo que quieres hacer posible.");
+  });
+
 });
 
 describe("higiene de archivos", () => {
