@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { extname, join } from "node:path";
 
@@ -99,17 +100,73 @@ describe("enlaces y recursos", () => {
 });
 
 describe("operación", () => {
-  test("incluye contenedor, healthcheck y configuración segura", async () => {
-    const [dockerfile, nginx] = await Promise.all([read("Dockerfile"), read("nginx.conf")]);
-    expect(dockerfile).toContain("nginx-unprivileged");
+  test("fija la imagen actualizada de nginx al digest multi-arquitectura aprobado", async () => {
+    const dockerfile = await read("Dockerfile");
+    expect(dockerfile).toMatch(
+      /^FROM nginxinc\/nginx-unprivileged:1\.30\.4-alpine@sha256:44e36330f74d4f3a1d4e222acca9e23b401fb87811a7597024502bb759c4dd49$/m
+    );
+    expect(dockerfile).not.toContain("nginx-unprivileged:1.27-alpine");
     expect(dockerfile).toContain("USER nginx");
     expect(dockerfile).toContain("HEALTHCHECK");
-    expect(nginx).toContain("location = /health");
-    expect(nginx).toContain("Content-Security-Policy");
-    expect(nginx).toContain("X-Content-Type-Options");
-    expect(nginx).toContain('error_page 404 /404.html');
-    expect(nginx).toContain("immutable");
+  });
+
+  test("usa caché corta y revalidable para recursos sin versión", async () => {
+    const nginx = await read("nginx.conf");
+    const assetPolicy = nginx
+      .split("\n")
+      .find((line) => line.includes("(?:css|js|svg)"));
+
+    expect(assetPolicy).toBeDefined();
+    expect(assetPolicy).toContain("must-revalidate");
+    expect(assetPolicy).not.toContain("immutable");
+    const maxAge = Number(assetPolicy.match(/max-age=(\d+)/)?.[1]);
+    expect(maxAge).toBeGreaterThan(0);
+    expect(maxAge).toBeLessThanOrEqual(3600);
+    expect(nginx).not.toContain("31536000");
+    expect(nginx).not.toContain("immutable");
     expect(nginx).toContain('"no-cache"');
+  });
+
+  test("autoriza solo el JSON-LD inline mediante su hash exacto", async () => {
+    const [html, nginx] = await Promise.all([read("index.html"), read("nginx.conf")]);
+    const jsonLd = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];
+    const csp = nginx.match(/add_header Content-Security-Policy "([^"]+)" always;/)?.[1];
+
+    expect(jsonLd).toBeDefined();
+    expect(csp).toBeDefined();
+    const hash = createHash("sha256").update(jsonLd).digest("base64");
+    const scriptSources = csp
+      .split(";")
+      .map((directive) => directive.trim())
+      .find((directive) => directive.startsWith("script-src"))
+      ?.split(/\s+/)
+      .slice(1);
+
+    expect(scriptSources).toEqual(["'self'", `'sha256-${hash}'`]);
+    expect(csp).not.toContain("'unsafe-inline'");
+    for (const directive of [
+      "default-src 'self'",
+      "base-uri 'self'",
+      "connect-src 'none'",
+      "font-src 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+      "img-src 'self' data:",
+      "object-src 'none'",
+      "style-src 'self'",
+      "upgrade-insecure-requests"
+    ]) {
+      expect(csp).toContain(directive);
+    }
+  });
+
+  test("sirve el 404 propio al solicitar el directorio de assets", async () => {
+    const nginx = await read("nginx.conf");
+    expect(nginx).toContain("location = /health");
+    expect(nginx).toContain("X-Content-Type-Options");
+    expect(nginx).toMatch(/location = \/assets\/\s*{\s*return 404;\s*}/);
+    expect(nginx).toContain("error_page 404 /404.html");
+    expect(nginx).toMatch(/location = \/404\.html\s*{\s*internal;\s*}/);
   });
 
   test("incluye la documentación y scripts del proyecto", async () => {
@@ -119,6 +176,55 @@ describe("operación", () => {
     for (const heading of ["Desarrollo", "Pruebas", "Build", "Despliegue"]) {
       expect(readme).toContain(`## ${heading}`);
     }
+  });
+});
+
+describe("accesibilidad", () => {
+  const relativeLuminance = (hex) => {
+    const normalized = hex.replace("#", "");
+    const expanded = normalized.length === 3
+      ? normalized.split("").map((character) => character.repeat(2)).join("")
+      : normalized;
+    const channels = expanded.match(/.{2}/g).map((channel) => {
+      const value = Number.parseInt(channel, 16) / 255;
+      return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  };
+
+  const contrast = (first, second) => {
+    const luminances = [relativeLuminance(first), relativeLuminance(second)].sort((a, b) => b - a);
+    return (luminances[0] + 0.05) / (luminances[1] + 0.05);
+  };
+
+  test("el enlace de contacto conserva contraste AA y muestra un foco visible", async () => {
+    const css = await read("styles.css");
+    const blue = css.match(/--blue:\s*(#[\da-f]{6})/i)?.[1];
+    const hover = css.match(/\.contact-link:hover\s*{([^}]*)}/)?.[1];
+    const focus = css.match(/\.contact-link:focus-visible\s*{([^}]*)}/)?.[1];
+
+    expect(blue).toBeDefined();
+    expect(hover).toMatch(/color:\s*#fff;/);
+    expect(focus).toMatch(/color:\s*#fff;/);
+    expect(contrast("#fff", blue)).toBeGreaterThanOrEqual(4.5);
+    expect(focus).toMatch(/outline:\s*3px solid #fff;/);
+    expect(focus).toMatch(/outline-offset:\s*6px;/);
+  });
+
+  test("los controles móviles declaran objetivos táctiles mínimos de 44 por 44 px", async () => {
+    const css = await read("styles.css");
+    const mobileStart = css.indexOf("@media (max-width: 800px)");
+    const mobileEnd = css.indexOf("@media (max-width: 520px)");
+    const mobile = css.slice(mobileStart, mobileEnd);
+    const targetRule = mobile.match(
+      /\.brand,\s*\.nav-toggle,\s*\.nav-list a,\s*\.text-link,\s*\.contact-link,\s*\.error-link\s*{([^}]*)}/
+    )?.[1];
+
+    expect(mobileStart).toBeGreaterThanOrEqual(0);
+    expect(targetRule).toBeDefined();
+    expect(targetRule).toMatch(/min-width:\s*44px;/);
+    expect(targetRule).toMatch(/min-height:\s*44px;/);
+    expect(mobile).toMatch(/\.text-link\s*{[^}]*display:\s*inline-flex;/);
   });
 });
 

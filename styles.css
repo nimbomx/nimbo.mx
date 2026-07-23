@@ -531,10 +531,16 @@ blockquote p {
   text-decoration: none;
 }
 
-.contact-link:hover,
-.contact-link:focus-visible {
-  color: var(--acid);
+.contact-link:hover {
+  color: #fff;
   border-color: var(--acid);
+}
+
+.contact-link:focus-visible {
+  color: #fff;
+  border-color: #fff;
+  outline: 3px solid #fff;
+  outline-offset: 6px;
 }
 
 footer {
@@ -608,6 +614,21 @@ footer p:last-child {
   .nav-list a {
     display: block;
     padding: 0.6rem;
+  }
+
+  .brand,
+  .nav-toggle,
+  .nav-list a,
+  .text-link,
+  .contact-link,
+  .error-link {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .text-link {
+    display: inline-flex;
+    align-items: center;
   }
 
   .nav-contact {
