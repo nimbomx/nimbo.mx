@@ -33,6 +33,10 @@ docker run --rm -p 8080:8080 nimbo-mx
 
 Comprueba el servicio con `curl http://localhost:8080/health`; debe responder `ok`.
 
+## Producción
+
+El despliegue canónico se realiza en Dokploy. El contenedor HTTP escucha en el puerto `8080`, el endpoint de salud es `/health` y los dominios públicos son `nimbo.mx` y `www.nimbo.mx`.
+
 ## Despliegue
 
 Publica la imagen en un servicio de contenedores que termine TLS para `nimbo.mx` y enrute el tráfico al puerto 8080. Configura el health check en `/health`. El sitio presupone HTTPS y su canonical es `https://nimbo.mx/`.
