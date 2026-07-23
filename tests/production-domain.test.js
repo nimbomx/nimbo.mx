@@ -7,6 +7,15 @@ const read = (path) => readFile(join(root, path), "utf8");
 const allowedProductionHosts = new Set(["nimbo.mx", "www.nimbo.mx"]);
 const forbiddenDomain = ["nyx", "mx"].join(".");
 
+const publicPages = [
+  ["index.html", "https://nimbo.mx/"],
+  ["laboratorio/index.html", "https://nimbo.mx/laboratorio/"],
+  [
+    "laboratorio/nimbo-pro/index.html",
+    "https://nimbo.mx/laboratorio/nimbo-pro/"
+  ]
+];
+
 const expectAllowedProductionUrl = (value) => {
   const url = new URL(value);
   expect(url.protocol).toBe("https:");
@@ -14,34 +23,47 @@ const expectAllowedProductionUrl = (value) => {
 };
 
 describe("dominios productivos publicados", () => {
-  test("canonical y og:url apuntan al dominio canónico aprobado", async () => {
-    const html = await read("index.html");
-    const canonical = html.match(
-      /<link\b(?=[^>]*\brel="canonical")(?=[^>]*\bhref="([^"]+)")[^>]*>/
-    )?.[1];
-    const openGraphUrl = html.match(
-      /<meta\b(?=[^>]*\bproperty="og:url")(?=[^>]*\bcontent="([^"]+)")[^>]*>/
-    )?.[1];
+  test("canonical y og:url de cada página apuntan a nimbo.mx", async () => {
+    for (const [file, expectedUrl] of publicPages) {
+      const html = await read(file);
+      const canonical = html.match(
+        /<link\b(?=[^>]*\brel="canonical")(?=[^>]*\bhref="([^"]+)")[^>]*>/
+      )?.[1];
+      const openGraphUrl = html.match(
+        /<meta\b(?=[^>]*\bproperty="og:url")(?=[^>]*\bcontent="([^"]+)")[^>]*>/
+      )?.[1];
 
-    expect(canonical).toBe("https://nimbo.mx/");
-    expect(openGraphUrl).toBe("https://nimbo.mx/");
-    expectAllowedProductionUrl(canonical);
-    expectAllowedProductionUrl(openGraphUrl);
+      expect(canonical, file).toBe(expectedUrl);
+      expect(openGraphUrl, file).toBe(expectedUrl);
+      expectAllowedProductionUrl(canonical);
+      expectAllowedProductionUrl(openGraphUrl);
+    }
   });
 
-  test("robots.txt y sitemap.xml solo publican URLs de los hosts aprobados", async () => {
+  test("las tarjetas sociales usan exclusivamente el asset canónico de nimbo.mx", async () => {
+    for (const [file] of publicPages) {
+      const html = await read(file);
+      const image = html.match(
+        /<meta\b(?=[^>]*\bproperty="og:image")(?=[^>]*\bcontent="([^"]+)")[^>]*>/
+      )?.[1];
+
+      expect(image, file).toBe("https://nimbo.mx/assets/og-image.png");
+      expectAllowedProductionUrl(image);
+    }
+  });
+
+  test("robots y sitemap publican solo las tres URLs canónicas aprobadas", async () => {
     const [robots, sitemap] = await Promise.all([
       read("robots.txt"),
       read("sitemap.xml")
     ]);
     const robotsUrls = robots.match(/https?:\/\/[^\s]+/g) ?? [];
-    const sitemapUrls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)]
-      .map((match) => match[1]);
+    const sitemapUrls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(
+      (match) => match[1]
+    );
 
     expect(robotsUrls).toEqual(["https://nimbo.mx/sitemap.xml"]);
-    expect(sitemapUrls).toContain("https://nimbo.mx/");
-    expect(sitemapUrls.length).toBeGreaterThan(0);
-
+    expect(sitemapUrls).toEqual(publicPages.map(([, url]) => url));
     for (const url of [...robotsUrls, ...sitemapUrls]) {
       expectAllowedProductionUrl(url);
     }
@@ -66,22 +88,22 @@ describe("dominios productivos publicados", () => {
     expect(production.toLowerCase()).not.toContain(forbiddenDomain);
   });
 
-  test("el sitio y su documentación no contienen el dominio rechazado", async () => {
+  test("los archivos publicados y documentados no mencionan el dominio rechazado", async () => {
     const publishedAndDocumentedFiles = [
       "404.html",
       "README.md",
       "index.html",
+      "laboratorio/index.html",
+      "laboratorio/nimbo-pro/index.html",
       "robots.txt",
       "sitemap.xml",
-      "assets/favicon.svg",
-      "assets/og-image.svg"
+      "assets/favicon.svg"
     ];
 
     for (const path of publishedAndDocumentedFiles) {
       const content = (await read(path)).toLowerCase();
-      const declaredMexicanDomains = content.match(
-        /\b(?:[a-z0-9-]+\.)+mx\b/g
-      ) ?? [];
+      const declaredMexicanDomains =
+        content.match(/\b(?:[a-z0-9-]+\.)+mx\b/g) ?? [];
 
       expect(content, path).not.toContain(forbiddenDomain);
       for (const domain of declaredMexicanDomains) {

@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="es-MX" data-motion="pending">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>nimbo.pro — Expediente 001 del Laboratorio Nimbo</title>
+  <meta name="description" content="Bitácora abierta sobre la construcción de nimbo.pro: un asistente en Telegram, una futura integración con WhatsApp y una hipótesis de conocimiento revisable.">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#050505">
+  <link rel="canonical" href="https://nimbo.mx/laboratorio/nimbo-pro/">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <meta property="og:type" content="article">
+  <meta property="og:locale" content="es_MX">
+  <meta property="og:site_name" content="Nimbo">
+  <meta property="og:title" content="nimbo.pro — Expediente 001">
+  <meta property="og:description" content="Un asistente en Telegram, WhatsApp como siguiente etapa y una hipótesis de conocimiento que deja rastro.">
+  <meta property="og:url" content="https://nimbo.mx/laboratorio/nimbo-pro/">
+  <meta property="og:image" content="https://nimbo.mx/assets/og-image.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Nimbo: construir también es investigar">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="nimbo.pro — Expediente 001">
+  <meta name="twitter:description" content="Un asistente en Telegram, WhatsApp como siguiente etapa y una hipótesis de conocimiento que deja rastro.">
+  <meta name="twitter:image" content="https://nimbo.mx/assets/og-image.png">
+  <meta name="twitter:image:alt" content="Nimbo: construir también es investigar">
+</head>
+<body class="entry-page">
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <div class="film-layer" data-film-layer aria-hidden="true"></div>
+
+  <header class="site-header site-header--dark">
+    <a class="wordmark" href="/" aria-label="Nimbo, inicio">NIMBO</a>
+    <nav class="site-nav" aria-label="Navegación principal">
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-list">
+        <span>Menú</span><span aria-hidden="true">↗</span>
+      </button>
+      <ul id="nav-list" class="nav-list">
+        <li><a href="/#trayectoria">Trayectoria</a></li>
+        <li><a href="/laboratorio/" aria-current="page">Laboratorio</a></li>
+        <li><a href="/#practica">Práctica</a></li>
+        <li><a href="/#contacto">Contacto</a></li>
+      </ul>
+    </nav>
+    <button class="motion-toggle" type="button" aria-pressed="false" data-motion-toggle>
+      <span>Movimiento</span>
+      <span data-motion-state>Auto</span>
+    </button>
+  </header>
+
+  <main id="contenido">
+    <article>
+      <header class="entry-hero">
+        <p class="eyebrow">LAB 001 · nimbo.pro · En curso</p>
+        <h1>Un asistente no debería olvidar cada conversación.</h1>
+        <p class="entry-deck">Este expediente documenta qué se está haciendo, qué todavía es una hipótesis y qué deberá comprobarse antes de hablar de resultados.</p>
+        <dl class="entry-facts">
+          <div><dt>Formato</dt><dd>Bitácora serial</dd></div>
+          <div><dt>Canal en trabajo</dt><dd>Telegram</dd></div>
+          <div><dt>Siguiente canal</dt><dd>WhatsApp</dd></div>
+        </dl>
+      </header>
+
+      <div class="entry-layout">
+        <nav class="entry-toc" aria-label="Contenido del expediente">
+          <p>Orden de tomas</p>
+          <ol>
+            <li><a href="#contexto"><span>01</span>Contexto</a></li>
+            <li><a href="#hipotesis"><span>02</span>Hipótesis</a></li>
+            <li><a href="#arquitectura"><span>03</span>Arquitectura</a></li>
+            <li><a href="#telegram"><span>04</span>Telegram</a></li>
+            <li><a href="#montaje"><span>05</span>Montaje</a></li>
+            <li><a href="#cronologia"><span>06</span>Cronología</a></li>
+          </ol>
+        </nav>
+
+        <div class="entry-content">
+          <section id="contexto" class="entry-section" aria-labelledby="context-title">
+            <span class="article-mark">Hecho confirmado</span>
+            <h2 id="context-title">La conversación ya empezó.</h2>
+            <p>nimbo.pro está en desarrollo y está incorporando un asistente virtual conectado a Telegram. Este primer canal permitirá observar preguntas reales y entender qué necesita una persona cuando conversa con el sistema.</p>
+            <p>La bitácora reunirá decisiones, integraciones, problemas y soluciones para que el resultado pueda leerse también como historia de construcción y como material práctico.</p>
+            <figure class="entry-image">
+              <img src="/assets/images/lab-wiring.webp" alt="Detalle de manos conectando el primer canal a una mesa de trabajo conceptual" loading="lazy" width="1536" height="1024">
+              <figcaption>Fotografía conceptual · La conexión se documentará sin revelar secretos ni credenciales.</figcaption>
+            </figure>
+          </section>
+
+          <section id="hipotesis" class="entry-section" aria-labelledby="hypothesis-title">
+            <span class="article-mark">Por comprobar</span>
+            <h2 id="hypothesis-title">Responder no basta.</h2>
+            <p>La hipótesis es que un asistente puede volverse más útil si las preguntas que no sabe resolver dejan de perderse.</p>
+            <p>En lugar de tratar cada conversación como un episodio aislado, el sistema buscará detectar preguntas nuevas, convertirlas en candidatas de conocimiento y someterlas a revisión antes de incorporarlas a una base reutilizable.</p>
+            <p>No afirmamos que el asistente “aprende automáticamente”. Lo que se diseñará y evaluará es un ciclo controlado de captura, revisión, publicación y reutilización.</p>
+          </section>
+
+          <section id="arquitectura" class="entry-section" aria-labelledby="architecture-title">
+            <span class="article-mark">Diseño en evolución</span>
+            <h2 id="architecture-title">Del canal a la memoria.</h2>
+            <p>La arquitectura se entiende por capas. Algunas están en trabajo; otras pertenecen al siguiente tramo del proyecto.</p>
+            <div class="flow" aria-label="Flujo conceptual del asistente">
+              <div><span>Entrada</span><strong>Persona</strong></div>
+              <div><span>Canal</span><strong>Telegram</strong></div>
+              <div><span>Proceso</span><strong>Asistente + contexto</strong></div>
+              <div><span>Señal</span><strong>Pregunta no resuelta</strong></div>
+              <div><span>Control</span><strong>Revisión humana</strong></div>
+              <div><span>Memoria</span><strong>Base reutilizable</strong></div>
+            </div>
+            <h3>Capa 01 · Entrada</h3>
+            <p>Telegram es el canal actualmente en trabajo. WhatsApp está previsto como siguiente etapa, no como integración terminada.</p>
+            <h3>Capa 02 · Conocimiento</h3>
+            <p>Las preguntas frecuentes y los vacíos detectados pueden convertirse en candidatas. Una candidata no debe publicarse como verdad sin revisión.</p>
+            <h3>Capa 03 · Control</h3>
+            <p>El ciclo necesita trazabilidad: saber de dónde surgió una respuesta, quién la revisó, cuándo cambió y qué consultas la reutilizan.</p>
+          </section>
+
+          <section id="telegram" class="entry-section" aria-labelledby="telegram-title">
+            <span class="article-mark">En trabajo</span>
+            <h2 id="telegram-title">Telegram entra en escena.</h2>
+            <p>El primer capítulo sigue la incorporación del asistente a Telegram. El objetivo editorial no es declarar una integración terminada, sino registrar cómo se conecta el canal, qué decisiones exige y qué preguntas aparecen durante las pruebas.</p>
+            <ol>
+              <li><strong>La necesidad:</strong> qué conversación debe resolver el canal.</li>
+              <li><strong>La conexión:</strong> qué componentes participan, sin exponer secretos.</li>
+              <li><strong>Los límites:</strong> qué no puede hacer todavía.</li>
+              <li><strong>La prueba:</strong> cómo se observará su comportamiento.</li>
+              <li><strong>El corte:</strong> qué queda listo y qué pasa al siguiente capítulo.</li>
+            </ol>
+            <figure class="entry-image">
+              <img src="/assets/images/lab-terminal.webp" alt="Terminal y libreta utilizadas como metáfora de conversación y memoria" loading="lazy" width="1536" height="1024">
+              <figcaption>Fotografía conceptual · Conversación, registro y revisión pertenecen al mismo sistema.</figcaption>
+            </figure>
+          </section>
+
+          <section id="montaje" class="entry-section" aria-labelledby="editing-title">
+            <span class="article-mark">Mesa de montaje</span>
+            <h2 id="editing-title">Lo que obliga a cambiar el guion.</h2>
+            <div class="edit-table">
+              <article>
+                <span>01</span>
+                <h3>Problema</h3>
+                <p>Una respuesta aislada resuelve un momento, pero no construye memoria. Guardarlo todo puede acumular ruido o información que no debe conservarse.</p>
+              </article>
+              <article>
+                <span>02</span>
+                <h3>Decisión propuesta</h3>
+                <p>Tratar cada nueva pregunta como candidata, no como conocimiento publicado, e incorporar una revisión antes de reutilizarla.</p>
+              </article>
+              <article>
+                <span>03</span>
+                <h3>Hallazgo</h3>
+                <p>Aún no hay un resultado medido que publicar. Los hallazgos aparecerán con su prueba, incluso cuando contradigan la hipótesis original.</p>
+              </article>
+            </div>
+          </section>
+
+          <section id="cronologia" class="entry-section" aria-labelledby="timeline-title">
+            <span class="article-mark">Bitácora abierta</span>
+            <h2 id="timeline-title">Cronología sin final anticipado.</h2>
+            <ol class="timeline">
+              <li><span>Toma 01</span><strong>El encuadre</strong><em>Contexto definido</em></li>
+              <li><span>Toma 02</span><strong>Telegram</strong><em>En trabajo</em></li>
+              <li><span>Toma 03</span><strong>Memoria</strong><em>Hipótesis en diseño</em></li>
+              <li><span>Toma 04</span><strong>WhatsApp</strong><em>Siguiente etapa</em></li>
+              <li><span>Toma 05</span><strong>Evaluación</strong><em>Por definir</em></li>
+            </ol>
+            <h3>Próximas tomas</h3>
+            <ul>
+              <li>Publicar el mapa real de la integración con Telegram.</li>
+              <li>Registrar la primera decisión técnica verificable.</li>
+              <li>Definir qué convierte una pregunta en candidata de conocimiento.</li>
+              <li>Diseñar el paso de revisión y publicación de respuestas.</li>
+              <li>Preparar WhatsApp como etapa posterior.</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+
+      <footer class="entry-end">
+        <h2>Continuará con evidencia.</h2>
+        <p>Este no es el relato retrospectivo de un producto perfecto. Es el registro de un sistema mientras aprende a tomar forma.</p>
+        <a class="action-link action-link--light" href="/laboratorio/">Volver al Laboratorio <span aria-hidden="true">↗</span></a>
+      </footer>
+    </article>
+  </main>
+
+  <footer class="site-footer site-footer--dark">
+    <a class="wordmark" href="/" aria-label="Nimbo, inicio">NIMBO</a>
+    <p>Expediente 001 · Sigue abierto</p>
+    <p>© <span data-year>2026</span></p>
+  </footer>
+
+  <script src="/script.js" defer></script>
+</body>
+</html>

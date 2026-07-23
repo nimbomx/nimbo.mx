@@ -6,9 +6,14 @@
   "scripts": {
     "dev": "bunx serve .",
     "test": "bun test",
-    "build": "docker build -t nimbo-mx ."
+    "build:assets": "bun build src/film-entry.js --outfile assets/film-layer.js --target browser --format=iife --minify && bun scripts/normalize-film-bundle.js",
+    "check": "bun run build:assets && bun test",
+    "build": "bun run build:assets && docker build -t nimbo-mx ."
   },
   "engines": {
     "bun": ">=1.1.0"
+  },
+  "dependencies": {
+    "three": "0.185.1"
   }
 }
