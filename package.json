@@ -1,0 +1,14 @@
+{
+  "name": "nimbo-mx",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sitio profesional de Nimbo",
+  "scripts": {
+    "dev": "bunx serve .",
+    "test": "bun test",
+    "build": "docker build -t nimbo-mx ."
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  }
+}
