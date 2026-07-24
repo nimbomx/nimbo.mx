@@ -1,9 +1,9 @@
 import { autoStartFilmLayers } from "./film-layer.js";
 
 autoStartFilmLayers({
-  maxDpr: 1.5,
-  minParticles: 22,
-  maxParticles: 120,
-  maxFps: 30,
-  pixelsPerParticle: 22_000,
+  maxDpr: 1.25,
+  minParticles: 24,
+  maxParticles: 110,
+  maxFps: 24,
+  pixelsPerParticle: 17_000,
 });
