@@ -269,25 +269,120 @@ describe("enlaces y recursos", () => {
 
 describe("película, interacción y accesibilidad", () => {
   test("la capa Three.js combina shader, partículas y límites de rendimiento", async () => {
-    const [source, entry, bundle] = await Promise.all([
+    const [source, entry, bundle, css] = await Promise.all([
       read("src/film-layer.js"),
       read("src/film-entry.js"),
-      readBinary("assets/film-layer.js")
+      readBinary("assets/film-layer.js"),
+      read("styles.css")
     ]);
 
     expect(source).toContain("from 'three'");
     expect(source).toContain("new ShaderMaterial");
-    expect(source).toContain("new PointsMaterial");
+    expect(source).toContain("DUST_VERTEX_SHADER");
+    expect(source).toContain("DUST_FRAGMENT_SHADER");
     expect(source).toContain("new Points");
+    expect(source).toContain("gl_PointCoord");
+    for (const attribute of [
+      "aSize",
+      "aOpacity",
+      "aSpeed",
+      "aDrift",
+      "aPhase",
+      "aTone"
+    ]) {
+      expect(source).toContain(`'${attribute}'`);
+    }
     expect(source).toContain("MAX_DEVICE_PIXEL_RATIO = 1.5");
+    expect(source).toContain("getContext('webgl2'");
+    expect(source).not.toContain("getContext('webgl',");
     expect(source).toContain("maxFps");
+    expect(source).toContain("frameAccumulator");
     expect(source).toContain("visibilitychange");
     expect(source).toContain("IntersectionObserver");
     expect(source).toContain("requestAnimationFrame");
     expect(source).toContain("dispose()");
     expect(entry).toContain("autoStartFilmLayers");
+    expect(entry).toContain("maxDpr: 1.25");
+    expect(entry).toContain("maxFps: 24");
+    expect(entry).toContain("minParticles: 24");
+    expect(entry).toContain("maxParticles: 110");
+    expect(entry).toContain("pixelsPerParticle: 17_000");
+    expect(css).toMatch(/\.film-layer canvas\s*\{[^}]*opacity:\s*0\.72;/);
     expect(bundle.byteLength).toBeGreaterThan(100_000);
     expect(bundle.byteLength).toBeLessThan(650_000);
+  });
+
+  test("el deterioro fílmico es localizado, infrecuente y no desplaza el documento", async () => {
+    const source = await read("src/film-layer.js");
+
+    expect(source).toContain("float slipCycle = 9.5;");
+    expect(source).toContain("float chemicalCycle = 9.7;");
+    expect(source).toContain("float chemicalPresence = step(");
+    expect(source).toContain("0.62,");
+    expect(source).toContain("float alpha = min(0.085");
+    expect(source).toContain("chemicalRadius");
+    expect(source).toContain("chemicalRing");
+    expect(source).toContain("chemicalCore");
+    expect(source).toContain("slipEnvelope");
+    expect(source).toContain("splice");
+    expect(source).not.toContain("host.style.transform");
+    expect(source).not.toContain("canvas.style.transform");
+  });
+
+  test("el reloj real conserva 24 fps y no deriva entre 24 y 144 Hz", async () => {
+    const { FilmLayer } = await import("../src/film-layer.js");
+    const durationSeconds = 60;
+    const targetFps = 24;
+
+    const simulateLayerClock = (refreshRate) => {
+      let renders = 0;
+      const layer = {
+        frameRequest: null,
+        lastFrameTime: null,
+        frameAccumulator: 0,
+        elapsedTime: 0,
+        options: { maxFps: targetFps },
+        filmMaterial: { uniforms: { uTime: { value: 0 } } },
+        dustMaterial: { uniforms: { uTime: { value: 0 } } },
+        renderer: {
+          render() {
+            renders += 1;
+          }
+        },
+        scene: {},
+        camera: {},
+        shouldAnimate: () => true,
+        activateStaticFallback() {
+          throw new Error("el render simulado no debe activar fallback");
+        },
+        view: {
+          requestAnimationFrame() {
+            return 1;
+          }
+        }
+      };
+      layer.onFrame = FilmLayer.prototype.onFrame.bind(layer);
+
+      const frameCount = durationSeconds * refreshRate;
+      for (let frame = 0; frame <= frameCount; frame += 1) {
+        layer.onFrame((frame * 1_000) / refreshRate);
+      }
+
+      return { renders, elapsedTime: layer.elapsedTime };
+    };
+
+    for (const refreshRate of [24, 60, 120, 144]) {
+      const result = simulateLayerClock(refreshRate);
+      expect(result.renders).toBeGreaterThanOrEqual(
+        targetFps * durationSeconds - 1
+      );
+      expect(result.renders).toBeLessThanOrEqual(
+        targetFps * durationSeconds + 1
+      );
+      expect(Math.abs(result.elapsedTime - durationSeconds)).toBeLessThanOrEqual(
+        1 / targetFps
+      );
+    }
   });
 
   test("movimiento reducido, ahorro de datos y control manual usan fallback estático", async () => {

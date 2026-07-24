@@ -5,8 +5,10 @@ que documenta proyectos, decisiones y aprendizajes mientras siguen en construcci
 
 La portada usa el lenguaje visual **Cámara oscura** y el Laboratorio funciona como una
 **Sala de montaje**. Las fotografías y la textura de película son assets originales.
-La capa decorativa WebGL usa Three.js y se desactiva cuando el sistema solicita
-movimiento reducido, el navegador activa ahorro de datos o WebGL no está disponible.
+La capa decorativa WebGL usa Three.js a 24 fps para combinar grano orgánico,
+polvo, rayas, microdesfase de registro y halos químicos breves sin mover el
+contenido del documento. Se desactiva cuando el sistema solicita movimiento
+reducido, el navegador activa ahorro de datos o WebGL 2 no está disponible.
 La procedencia y los prompts exactos de los assets están en
 [`IMAGEGEN.md`](IMAGEGEN.md).
 
