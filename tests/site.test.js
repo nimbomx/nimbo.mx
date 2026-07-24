@@ -307,7 +307,7 @@ describe("película, interacción y accesibilidad", () => {
     expect(entry).toContain("minParticles: 48");
     expect(entry).toContain("maxParticles: 160");
     expect(entry).toContain("pixelsPerParticle: 9_000");
-    expect(css).toMatch(/\.film-layer canvas\s*\{[^}]*opacity:\s*0\.82;/);
+    expect(css).toMatch(/\.film-layer canvas\s*\{[^}]*opacity:\s*0\.86;/);
     expect(bundle.byteLength).toBeGreaterThan(100_000);
     expect(bundle.byteLength).toBeLessThan(650_000);
   });
@@ -350,7 +350,19 @@ describe("película, interacción y accesibilidad", () => {
     expect(source).not.toContain("scratchPresence");
     expect(source).toContain("float exposureFrame = floor(uTime * 9.0);");
     expect(source).toContain("float rollCenter = fract(uTime * 0.085);");
-    expect(source).toContain("float alpha = min(0.140");
+    expect(source).toContain("0.140");
+    expect(source).toContain("+ scrollStrength * 0.040");
+    expect(source).toContain("+ uPointerEnergy * 0.010");
+    expect(source).toContain("min(interactionAlphaLimit, combinedAlpha)");
+    expect(source).toContain("uniform vec2 uPointer;");
+    for (const uniform of [
+      "uPointerEnergy",
+      "uScrollImpulse",
+      "uScrollSettle",
+      "uScrollDirection"
+    ]) {
+      expect(source).toContain(`uniform float ${uniform};`);
+    }
     expect(source).toContain("chemicalRadius");
     expect(source).toContain("chemicalRing");
     expect(source).toContain("chemicalCore");
@@ -406,6 +418,14 @@ describe("película, interacción y accesibilidad", () => {
       Math.fround(0.94)
     ]));
     expect(layer.dustMaterial.uniforms.uPixelRatio.value).toBe(1);
+    expect(layer.dustMaterial.uniforms.uPointer.value.toArray()).toEqual([
+      0.5,
+      0.5
+    ]);
+    expect(layer.dustMaterial.uniforms.uPointerEnergy.value).toBe(0);
+    expect(layer.dustMaterial.uniforms.uScrollImpulse.value).toBe(0);
+    expect(layer.dustMaterial.uniforms.uScrollSettle.value).toBe(0);
+    expect(layer.dustMaterial.uniforms.uScrollDirection.value).toBe(1);
 
     const profile = {
       pixelsPerParticle: 9_000,
@@ -431,6 +451,181 @@ describe("película, interacción y accesibilidad", () => {
     layer.dustMaterial.dispose();
   });
 
+  test("cursor y scroll producen impulsos reactivos reversibles", async () => {
+    const { FilmLayer } = await import("../src/film-layer.js");
+    const { Vector2 } = await import("three");
+    const listeners = new Map();
+    const removed = [];
+    const clearedTimers = [];
+    let timerCallback = null;
+    let timerDelay = null;
+
+    const view = {
+      innerWidth: 1000,
+      innerHeight: 500,
+      scrollY: 0,
+      pageYOffset: 0,
+      addEventListener(type, handler, options) {
+        listeners.set(type, { handler, options });
+      },
+      removeEventListener(type) {
+        removed.push(type);
+      },
+      setTimeout(callback, delay) {
+        timerCallback = callback;
+        timerDelay = delay;
+        return 7;
+      },
+      clearTimeout(id) {
+        clearedTimers.push(id);
+      }
+    };
+    const layer = {
+      view,
+      canvas: { dataset: {} },
+      rendererCleanups: [],
+      pointerTarget: new Vector2(0.5, 0.5),
+      pointerCurrent: new Vector2(0.5, 0.5),
+      pointerEnergy: 0,
+      scrollImpulse: 0,
+      scrollSettle: 0,
+      scrollDirection: 1,
+      scrollActive: false
+    };
+
+    FilmLayer.prototype.installInteractionListeners.call(layer);
+
+    for (const type of [
+      "pointermove",
+      "pointerleave",
+      "scroll",
+      "scrollend"
+    ]) {
+      expect(listeners.get(type)?.options).toEqual({ passive: true });
+    }
+
+    listeners.get("pointermove").handler({
+      clientX: 0,
+      clientY: 0,
+      pointerType: "touch"
+    });
+    expect(layer.pointerEnergy).toBe(0);
+
+    listeners.get("pointermove").handler({
+      clientX: 800,
+      clientY: 100,
+      pointerType: "mouse"
+    });
+    expect(layer.pointerTarget.x).toBe(0.8);
+    expect(layer.pointerTarget.y).toBe(0.8);
+    expect(layer.pointerEnergy).toBeGreaterThan(0.16);
+    expect(layer.canvas.dataset.filmInteraction).toBe("pointer");
+
+    view.scrollY = 120;
+    listeners.get("scroll").handler();
+    expect(layer.scrollImpulse).toBe(1);
+    expect(layer.scrollDirection).toBe(1);
+    expect(layer.canvas.dataset.filmInteraction).toBe("scroll-start");
+    expect(timerDelay).toBe(120);
+
+    view.scrollY = 160;
+    listeners.get("scroll").handler();
+    expect(layer.canvas.dataset.filmInteraction).toBe("scrolling");
+    expect(clearedTimers).toEqual([7]);
+
+    timerCallback();
+    expect(layer.scrollActive).toBe(false);
+    expect(layer.scrollSettle).toBe(1);
+    expect(layer.canvas.dataset.filmInteraction).toBe("scroll-settle");
+
+    layer.scrollSettle = 0.5;
+    listeners.get("scrollend").handler();
+    expect(layer.scrollSettle).toBe(0.5);
+
+    view.scrollY = 200;
+    listeners.get("scroll").handler();
+    layer.rendererCleanups.splice(0).forEach((cleanup) => cleanup());
+    expect(removed.sort()).toEqual([
+      "pointerleave",
+      "pointermove",
+      "scroll",
+      "scrollend"
+    ]);
+    expect(clearedTimers).toEqual([7, 7]);
+    expect(layer.pointerEnergy).toBe(0);
+    expect(layer.scrollImpulse).toBe(0);
+    expect(layer.scrollSettle).toBe(0);
+  });
+
+  test("los uniforms siguen la interacción y sus impulsos se extinguen", async () => {
+    const { FilmLayer } = await import("../src/film-layer.js");
+    const { Vector2 } = await import("three");
+    const reactiveUniforms = () => ({
+      uTime: { value: 0 },
+      uPointer: { value: new Vector2(0.5, 0.5) },
+      uPointerEnergy: { value: 0 },
+      uScrollImpulse: { value: 0 },
+      uScrollSettle: { value: 0 },
+      uScrollDirection: { value: 1 }
+    });
+    const layer = {
+      frameRequest: null,
+      lastFrameTime: null,
+      frameAccumulator: 0,
+      elapsedTime: 0,
+      pointerTarget: new Vector2(0.8, 0.2),
+      pointerCurrent: new Vector2(0.5, 0.5),
+      pointerEnergy: 1,
+      scrollImpulse: 1,
+      scrollSettle: 1,
+      scrollDirection: -1,
+      scrollActive: false,
+      options: { maxFps: 24 },
+      filmMaterial: { uniforms: reactiveUniforms() },
+      dustMaterial: { uniforms: reactiveUniforms() },
+      renderer: { render() {} },
+      scene: {},
+      camera: {},
+      canvas: { dataset: { filmInteraction: "scroll-settle" } },
+      shouldAnimate: () => true,
+      activateStaticFallback() {
+        throw new Error("la interacción simulada no debe activar fallback");
+      },
+      view: {
+        requestAnimationFrame() {
+          return 1;
+        }
+      }
+    };
+    layer.onFrame = FilmLayer.prototype.onFrame.bind(layer);
+
+    layer.onFrame(0);
+    layer.onFrame(1_000 / 24);
+
+    expect(layer.filmMaterial.uniforms.uPointer.value.x).toBeGreaterThan(0.5);
+    expect(layer.filmMaterial.uniforms.uPointer.value.y).toBeLessThan(0.5);
+    expect(layer.filmMaterial.uniforms.uPointerEnergy.value).toBe(1);
+    expect(layer.filmMaterial.uniforms.uScrollImpulse.value).toBe(1);
+    expect(layer.filmMaterial.uniforms.uScrollSettle.value).toBe(1);
+    expect(layer.filmMaterial.uniforms.uScrollDirection.value).toBe(-1);
+    expect(layer.dustMaterial.uniforms.uPointer.value.toArray()).toEqual(
+      layer.filmMaterial.uniforms.uPointer.value.toArray()
+    );
+    expect(layer.pointerEnergy).toBeGreaterThan(0);
+    expect(layer.pointerEnergy).toBeLessThan(1);
+    expect(layer.scrollImpulse).toBeGreaterThan(0);
+    expect(layer.scrollImpulse).toBeLessThan(1);
+
+    for (let frame = 2; frame <= 60; frame += 1) {
+      layer.onFrame((frame * 1_000) / 24);
+    }
+
+    expect(layer.pointerEnergy).toBeLessThan(0.015);
+    expect(layer.scrollImpulse).toBeLessThan(0.015);
+    expect(layer.scrollSettle).toBeLessThan(0.015);
+    expect(layer.canvas.dataset.filmInteraction).toBe("idle");
+  });
+
   test("el reloj real conserva 24 fps y no deriva entre 24 y 144 Hz", async () => {
     const { FilmLayer } = await import("../src/film-layer.js");
     const durationSeconds = 60;
@@ -443,6 +638,20 @@ describe("película, interacción y accesibilidad", () => {
         lastFrameTime: null,
         frameAccumulator: 0,
         elapsedTime: 0,
+        pointerTarget: {
+          x: 0.5,
+          y: 0.5
+        },
+        pointerCurrent: {
+          lerp() {
+            return this;
+          }
+        },
+        pointerEnergy: 0,
+        scrollImpulse: 0,
+        scrollSettle: 0,
+        scrollDirection: 1,
+        scrollActive: false,
         options: { maxFps: targetFps },
         filmMaterial: { uniforms: { uTime: { value: 0 } } },
         dustMaterial: { uniforms: { uTime: { value: 0 } } },
