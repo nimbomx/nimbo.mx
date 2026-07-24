@@ -1,4 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#142927"/>
-  <path d="M13 43h38a8 8 0 0 0 .7-16 14 14 0 0 0-26-4.4A10.5 10.5 0 0 0 13 43Z" fill="#c9ff46"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <title>Nimbo</title>
+  <rect width="64" height="64" rx="7" fill="#050505"/>
+  <g fill="#f1ede3">
+    <rect width="8" height="34" x="15" y="15"/>
+    <polygon points="23,15 31,15 49,49 41,49"/>
+    <rect width="8" height="34" x="41" y="15"/>
+  </g>
 </svg>
