@@ -22,7 +22,8 @@ let motionChoice = readMotionChoice();
 let filmLayerRequested = false;
 
 const requestFilmLayer = () => {
-  if (filmLayerRequested || root.dataset.motion !== "on") {
+  const saveDataEnabled = navigator.connection?.saveData === true;
+  if (filmLayerRequested || root.dataset.motion !== "on" || saveDataEnabled) {
     return;
   }
 

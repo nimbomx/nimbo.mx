@@ -67,6 +67,16 @@ describe("estructura editorial", () => {
     }
     expect(html).toContain('class="cinema-hero"');
     expect(html).toContain('class="hero-still"');
+    expect(html).toContain('class="cinema-title__brand">Nimbo</span>');
+    expect(html).toContain(
+      'class="cinema-title__statement">Construir también es investigar.</span>'
+    );
+    expect(html).toContain('fetchpriority="high"');
+    expect(html).toContain('decoding="async"');
+    expect(html).not.toContain('class="hero-beam"');
+    expect(html.indexOf('id="hero-title"')).toBeLessThan(
+      html.indexOf('class="hero-still"')
+    );
     expect(html).toContain('href="/laboratorio/"');
     expect(html).toContain('href="/laboratorio/nimbo-pro/"');
     expect(html).toContain("contacto@nimbo.mx");
@@ -287,6 +297,7 @@ describe("película, interacción y accesibilidad", () => {
     expect(script).toContain('new CustomEvent("nimbo:motionchange"');
     expect(script).toContain('toggle.setAttribute("aria-pressed", String(enabled))');
     expect(script).toContain('root.dataset.motion !== "on"');
+    expect(script).toContain("navigator.connection?.saveData === true");
     expect(script).toContain('script.src = "/assets/film-layer.js"');
 
     for (const { file } of publicPages) {
