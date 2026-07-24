@@ -161,6 +161,18 @@ describe("metadata, imágenes y descubrimiento", () => {
     expect(image.byteLength).toBeGreaterThan(50_000);
   });
 
+  test("el favicon usa la marca N monocromática y no la nube anterior", async () => {
+    const favicon = await read("assets/favicon.svg");
+
+    expect(favicon).toContain("<title>Nimbo</title>");
+    expect(favicon).toContain('fill="#050505"');
+    expect(favicon).toContain('fill="#f1ede3"');
+    expect(favicon).toContain("<polygon");
+    expect(favicon).not.toContain("#142927");
+    expect(favicon).not.toContain("#c9ff46");
+    expect(favicon).not.toContain("<path");
+  });
+
   test("las fotografías publicadas son WebP locales, optimizadas y con dimensiones intrínsecas", async () => {
     const imagePaths = [
       "assets/images/hero-projection.webp",
