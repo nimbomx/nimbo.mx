@@ -302,24 +302,55 @@ describe("película, interacción y accesibilidad", () => {
     expect(source).toContain("requestAnimationFrame");
     expect(source).toContain("dispose()");
     expect(entry).toContain("autoStartFilmLayers");
-    expect(entry).toContain("maxDpr: 1.25");
+    expect(entry).toContain("maxDpr: 1");
     expect(entry).toContain("maxFps: 24");
-    expect(entry).toContain("minParticles: 24");
-    expect(entry).toContain("maxParticles: 110");
-    expect(entry).toContain("pixelsPerParticle: 17_000");
-    expect(css).toMatch(/\.film-layer canvas\s*\{[^}]*opacity:\s*0\.72;/);
+    expect(entry).toContain("minParticles: 48");
+    expect(entry).toContain("maxParticles: 160");
+    expect(entry).toContain("pixelsPerParticle: 9_000");
+    expect(css).toMatch(/\.film-layer canvas\s*\{[^}]*opacity:\s*0\.82;/);
     expect(bundle.byteLength).toBeGreaterThan(100_000);
     expect(bundle.byteLength).toBeLessThan(650_000);
   });
 
-  test("el deterioro fílmico es localizado, infrecuente y no desplaza el documento", async () => {
+  test("la proyección se mueve desde el inicio sin desplazar el documento", async () => {
     const source = await read("src/film-layer.js");
+    const { FILM_EVENT_TIMING } = await import("../src/film-layer.js");
 
-    expect(source).toContain("float slipCycle = 9.5;");
-    expect(source).toContain("float chemicalCycle = 9.7;");
-    expect(source).toContain("float chemicalPresence = step(");
-    expect(source).toContain("0.62,");
-    expect(source).toContain("float alpha = min(0.085");
+    const latestSlip =
+      FILM_EVENT_TIMING.slipCycle *
+      (
+        FILM_EVENT_TIMING.slipOffsetMinimum +
+        FILM_EVENT_TIMING.slipOffsetRange
+      );
+    const latestChemical =
+      FILM_EVENT_TIMING.chemicalCycle *
+      (
+        FILM_EVENT_TIMING.chemicalOffsetMinimum +
+        FILM_EVENT_TIMING.chemicalOffsetRange
+      );
+
+    expect(FILM_EVENT_TIMING.scratchVisibleBy).toBeLessThan(0.5);
+    expect(FILM_EVENT_TIMING.scratchFullUntil).toBeGreaterThan(1);
+    expect(latestSlip).toBeLessThan(4);
+    expect(FILM_EVENT_TIMING.slipMinimumPixels).toBeGreaterThanOrEqual(1);
+    expect(FILM_EVENT_TIMING.slipAmplitudePixels).toBeGreaterThanOrEqual(2);
+    expect(
+      FILM_EVENT_TIMING.slipCycle *
+      FILM_EVENT_TIMING.slipEnvelopeHalfWidth
+    ).toBeGreaterThan(0.3);
+    expect(latestChemical).toBeLessThanOrEqual(3.8);
+    expect(
+      FILM_EVENT_TIMING.chemicalCycle *
+      FILM_EVENT_TIMING.chemicalWindowHalfWidth
+    ).toBeGreaterThan(0.6);
+    expect(source).toContain("float slipCycle = ${FILM_EVENT_TIMING.slipCycle};");
+    expect(source).toContain("float scratchCycle = ${FILM_EVENT_TIMING.scratchCycle};");
+    expect(source).toContain("float chemicalCycle = ${FILM_EVENT_TIMING.chemicalCycle};");
+    expect(source).not.toContain("chemicalPresence");
+    expect(source).not.toContain("scratchPresence");
+    expect(source).toContain("float exposureFrame = floor(uTime * 9.0);");
+    expect(source).toContain("float rollCenter = fract(uTime * 0.085);");
+    expect(source).toContain("float alpha = min(0.140");
     expect(source).toContain("chemicalRadius");
     expect(source).toContain("chemicalRing");
     expect(source).toContain("chemicalCore");
@@ -327,6 +358,77 @@ describe("película, interacción y accesibilidad", () => {
     expect(source).toContain("splice");
     expect(source).not.toContain("host.style.transform");
     expect(source).not.toContain("canvas.style.transform");
+  });
+
+  test("el polvo GPU conserva un perfil visible y de bajo costo", async () => {
+    const {
+      FilmLayer,
+      calculateFilmParticleCount
+    } = await import("../src/film-layer.js");
+    const scene = {
+      add() {},
+      remove() {}
+    };
+    const layer = {
+      scene,
+      dust: null,
+      dustGeometry: null,
+      dustMaterial: null,
+      elapsedTime: 0,
+      view: { devicePixelRatio: 2 },
+      options: { maxDpr: 1 }
+    };
+
+    FilmLayer.prototype.rebuildDust.call(layer, 96);
+
+    const readAttribute = (name) => [
+      ...layer.dustGeometry.getAttribute(name).array
+    ];
+    const sizes = readAttribute("aSize");
+    const opacities = readAttribute("aOpacity");
+    const speeds = readAttribute("aSpeed").map(Math.abs);
+    const drifts = readAttribute("aDrift");
+    const tones = readAttribute("aTone");
+
+    for (const values of [sizes, opacities, speeds, drifts, tones]) {
+      expect(values).toHaveLength(96);
+    }
+    expect(Math.min(...sizes)).toBeGreaterThanOrEqual(2);
+    expect(Math.max(...sizes)).toBeLessThan(12);
+    expect(Math.min(...opacities)).toBeGreaterThanOrEqual(0.18);
+    expect(Math.max(...opacities)).toBeLessThan(0.52);
+    expect(Math.min(...speeds)).toBeGreaterThanOrEqual(0.018);
+    expect(Math.max(...speeds)).toBeLessThan(0.055);
+    expect(Math.min(...drifts)).toBeGreaterThanOrEqual(0.01);
+    expect(Math.max(...drifts)).toBeLessThan(0.035);
+    expect(new Set(tones)).toEqual(new Set([
+      Math.fround(0.14),
+      Math.fround(0.94)
+    ]));
+    expect(layer.dustMaterial.uniforms.uPixelRatio.value).toBe(1);
+
+    const profile = {
+      pixelsPerParticle: 9_000,
+      minParticles: 48,
+      maxParticles: 160
+    };
+    for (const [width, height, expected] of [
+      [390, 844, 48],
+      [683, 994, 75],
+      [1440, 900, 144],
+      [1920, 1080, 160]
+    ]) {
+      expect(calculateFilmParticleCount({
+        width,
+        height,
+        viewportWidth: width,
+        viewportHeight: height,
+        ...profile
+      })).toBe(expected);
+    }
+
+    layer.dustGeometry.dispose();
+    layer.dustMaterial.dispose();
   });
 
   test("el reloj real conserva 24 fps y no deriva entre 24 y 144 Hz", async () => {
@@ -368,7 +470,12 @@ describe("película, interacción y accesibilidad", () => {
         layer.onFrame((frame * 1_000) / refreshRate);
       }
 
-      return { renders, elapsedTime: layer.elapsedTime };
+      return {
+        renders,
+        elapsedTime: layer.elapsedTime,
+        filmTime: layer.filmMaterial.uniforms.uTime.value,
+        dustTime: layer.dustMaterial.uniforms.uTime.value
+      };
     };
 
     for (const refreshRate of [24, 60, 120, 144]) {
@@ -382,6 +489,8 @@ describe("película, interacción y accesibilidad", () => {
       expect(Math.abs(result.elapsedTime - durationSeconds)).toBeLessThanOrEqual(
         1 / targetFps
       );
+      expect(result.filmTime).toBe(result.elapsedTime);
+      expect(result.dustTime).toBe(result.elapsedTime);
     }
   });
 

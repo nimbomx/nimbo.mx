@@ -17,6 +17,22 @@ const ACTIVE_CLASS = 'film-layer--active';
 const MAX_DEVICE_PIXEL_RATIO = 1.5;
 const FRAME_TIME_EPSILON_MS = 0.000001;
 
+export const FILM_EVENT_TIMING = Object.freeze({
+  slipCycle: 5.8,
+  slipOffsetMinimum: 0.22,
+  slipOffsetRange: 0.44,
+  slipEnvelopeHalfWidth: 0.06,
+  slipMinimumPixels: 1.1,
+  slipAmplitudePixels: 2.4,
+  scratchCycle: 5.4,
+  scratchVisibleBy: 0.34,
+  scratchFullUntil: 1.35,
+  chemicalCycle: 7.6,
+  chemicalOffsetMinimum: 0.24,
+  chemicalOffsetRange: 0.26,
+  chemicalWindowHalfWidth: 0.085,
+});
+
 const VERTEX_SHADER = /* glsl */ `
   varying vec2 vUv;
 
@@ -56,26 +72,35 @@ const FRAGMENT_SHADER = /* glsl */ `
     vec2 resolution = max(uResolution, vec2(1.0));
     float filmFrame = floor(uTime * 18.0);
 
-    // The emulsion drifts continuously while the document stays perfectly
-    // still. A rare sub-two-pixel slip adds the feel of imperfect gate
-    // registration without moving or blurring live typography.
-    float slipCycle = 9.5;
+    // The emulsion moves while the document stays perfectly still. A short
+    // gate slip is guaranteed in every cycle so the projection reads as
+    // motion without ever displacing or blurring live typography.
+    float slipCycle = ${FILM_EVENT_TIMING.slipCycle};
     float slipEpoch = floor(uTime / slipCycle);
     float slipPhase = fract(uTime / slipCycle);
-    float slipOffset = 0.16 + 0.61 * hash21(vec2(slipEpoch, 34.17));
-    float slipPresence = step(0.68, hash21(vec2(slipEpoch, 19.47)));
+    float slipOffset = (
+      ${FILM_EVENT_TIMING.slipOffsetMinimum}
+      + ${FILM_EVENT_TIMING.slipOffsetRange}
+      * hash21(vec2(slipEpoch, 34.17))
+    );
     float slipEnvelope = (1.0 - smoothstep(
       0.0,
-      0.026,
+      ${FILM_EVENT_TIMING.slipEnvelopeHalfWidth},
       abs(slipPhase - slipOffset)
-    )) * slipPresence * smoothstep(2.0, 4.0, uTime);
-    float slipPixels = (
-      hash21(vec2(slipEpoch, 51.83)) * 2.0 - 1.0
-    ) * 1.65 * slipEnvelope;
+    )) * smoothstep(0.6, 1.2, uTime);
+    float slipSign = (
+      step(0.5, hash21(vec2(slipEpoch, 51.83))) * 2.0 - 1.0
+    );
+    float slipMagnitude = mix(
+      ${FILM_EVENT_TIMING.slipMinimumPixels},
+      ${FILM_EVENT_TIMING.slipAmplitudePixels},
+      hash21(vec2(slipEpoch, 67.29))
+    );
+    float slipPixels = slipSign * slipMagnitude * slipEnvelope;
 
     vec2 gateWeave = vec2(
-      sin(uTime * 1.73) * 0.62,
-      cos(uTime * 1.19) * 0.38 + slipPixels
+      sin(uTime * 1.73) * 1.25,
+      cos(uTime * 1.19) * 0.82 + slipPixels
     );
     vec2 pixel = floor(vUv * resolution + gateWeave);
 
@@ -85,34 +110,47 @@ const FRAGMENT_SHADER = /* glsl */ `
     float clumpedGrain = valueNoise(
       pixel * 0.17 + uTime * vec2(1.91, -1.37)
     );
+    float coarseGrain = hash21(
+      floor(pixel / 3.0) + filmFrame * vec2(3.17, 5.83)
+    );
+    float coarseSpark = smoothstep(0.86, 0.99, coarseGrain);
     float grainThreshold = 0.5 + (clumpedGrain - 0.5) * 0.20;
     float grainTone = step(grainThreshold, fineGrain);
+    grainTone = mix(
+      grainTone,
+      step(0.5, coarseGrain),
+      coarseSpark * 0.58
+    );
     float flicker = 0.88 + hash21(vec2(filmFrame, 9.17)) * 0.12;
     float grainAlpha = (
-      0.010
-      + abs(fineGrain - 0.5) * 0.036
-      + abs(clumpedGrain - 0.5) * 0.020
+      0.014
+      + abs(fineGrain - 0.5) * 0.052
+      + abs(clumpedGrain - 0.5) * 0.026
+      + coarseSpark * 0.035
     ) * flicker;
 
-    // A hairline can linger for a fraction of a second, but most cycles contain
-    // no damage at all.
-    float scratchCycle = 2.75;
+    // A drifting hairline appears early and then returns every few seconds.
+    // Its broken texture keeps it photographic instead of looking like UI.
+    float scratchCycle = ${FILM_EVENT_TIMING.scratchCycle};
     float scratchEpoch = floor(uTime / scratchCycle);
     float scratchLocal = mod(uTime, scratchCycle);
     float scratchX = hash21(vec2(scratchEpoch, 31.41)) * resolution.x;
     float scratchDistance = abs(pixel.x - scratchX);
-    float scratchPresence = step(
-      0.72,
-      hash21(vec2(scratchEpoch, 73.19))
-    );
-    float scratchLife = smoothstep(0.08, 0.22, scratchLocal) * (
-      1.0 - smoothstep(0.72, 1.24, scratchLocal)
+    float scratchLife = smoothstep(
+      0.18,
+      ${FILM_EVENT_TIMING.scratchVisibleBy},
+      scratchLocal
+    ) * (
+      1.0 - smoothstep(
+        ${FILM_EVENT_TIMING.scratchFullUntil},
+        1.85,
+        scratchLocal
+      )
     );
     float scratchTexture = 0.38 + 0.62 * hash21(
       vec2(floor(pixel.y / 41.0), scratchEpoch)
     );
-    float scratch = (1.0 - smoothstep(0.0, 1.15, scratchDistance))
-      * scratchPresence
+    float scratch = (1.0 - smoothstep(0.0, 1.60, scratchDistance))
       * scratchLife
       * scratchTexture;
 
@@ -124,22 +162,21 @@ const FRAGMENT_SHADER = /* glsl */ `
       1.0 - smoothstep(0.0, 1.35, spliceDistance)
     ) * slipEnvelope;
 
-    // Rare chemical halos suggest a momentary emulsion burn or solarization.
-    // The event is spatially small and never becomes a full-screen flash.
-    float chemicalCycle = 9.7;
+    // A local chemical halo is guaranteed within the first four seconds and
+    // then moves to a new position each cycle. It never becomes a full-screen
+    // flash.
+    float chemicalCycle = ${FILM_EVENT_TIMING.chemicalCycle};
     float chemicalEpoch = floor(uTime / chemicalCycle);
     float chemicalPhase = fract(uTime / chemicalCycle);
-    float chemicalOffset = 0.18 + 0.58 * hash21(
-      vec2(chemicalEpoch, 13.91)
+    float chemicalOffset = (
+      ${FILM_EVENT_TIMING.chemicalOffsetMinimum}
+      + ${FILM_EVENT_TIMING.chemicalOffsetRange}
+      * hash21(vec2(chemicalEpoch, 13.91))
     );
     float chemicalWindow = 1.0 - smoothstep(
       0.0,
-      0.040,
+      ${FILM_EVENT_TIMING.chemicalWindowHalfWidth},
       abs(chemicalPhase - chemicalOffset)
-    );
-    float chemicalPresence = step(
-      0.62,
-      hash21(vec2(chemicalEpoch, 91.07))
     );
     vec2 chemicalCenter = vec2(
       0.12 + hash21(vec2(chemicalEpoch, 27.17)) * 0.76,
@@ -157,8 +194,8 @@ const FRAGMENT_SHADER = /* glsl */ `
       hash21(vec2(chemicalSector, chemicalEpoch)) - 0.5
     ) * 0.012;
     float chemicalRadius = (
-      0.020
-      + hash21(vec2(chemicalEpoch, 42.23)) * 0.055
+      0.028
+      + hash21(vec2(chemicalEpoch, 42.23)) * 0.060
       + chemicalWobble
     );
     float chemicalDistance = length(chemicalUv);
@@ -178,21 +215,52 @@ const FRAGMENT_SHADER = /* glsl */ `
       chemicalRadius * 0.58,
       chemicalDistance
     );
-    float chemicalEvent = chemicalWindow * chemicalPresence;
+    float chemicalEvent = chemicalWindow;
 
     float defectAlpha = (
-      scratch * 0.050
-      + splice * 0.026
-      + chemicalRing * chemicalEvent * 0.048
-      + chemicalCore * chemicalEvent * 0.016
+      scratch * 0.075
+      + splice * 0.045
+      + chemicalRing * chemicalEvent * 0.070
+      + chemicalCore * chemicalEvent * 0.025
     );
-    float alpha = min(0.085, grainAlpha + defectAlpha);
-    float tone = mix(
+
+    // Frame-to-frame exposure variation and a slow travelling projector band
+    // make the animation legible even between local defects.
+    float exposureFrame = floor(uTime * 9.0);
+    float exposureSignal = (
+      hash21(vec2(exposureFrame, 47.13)) * 2.0 - 1.0
+    );
+    float exposureAlpha = 0.006 + abs(exposureSignal) * 0.012;
+    float exposureTone = step(0.0, exposureSignal);
+    float rollCenter = fract(uTime * 0.085);
+    float rollRawDistance = abs(vUv.y - rollCenter);
+    float rollDistance = min(rollRawDistance, 1.0 - rollRawDistance);
+    float rollBand = (
+      1.0 - smoothstep(0.025, 0.160, rollDistance)
+    ) * 0.014;
+
+    float baseAlpha = grainAlpha + defectAlpha;
+    float projectionAlpha = exposureAlpha + rollBand;
+    float combinedAlpha = max(0.0001, baseAlpha + projectionAlpha);
+    float baseTone = mix(
       grainTone,
       1.0,
       clamp(scratch + splice + chemicalRing * chemicalEvent, 0.0, 1.0)
     );
-    tone = mix(tone, 0.0, chemicalCore * chemicalEvent * 0.72);
+    baseTone = mix(
+      baseTone,
+      0.0,
+      chemicalCore * chemicalEvent * 0.72
+    );
+    float projectionTone = mix(
+      exposureTone,
+      1.0,
+      rollBand / max(0.0001, projectionAlpha)
+    );
+    float tone = (
+      baseTone * baseAlpha + projectionTone * projectionAlpha
+    ) / combinedAlpha;
+    float alpha = min(0.140, combinedAlpha);
 
     gl_FragColor = vec4(vec3(tone), alpha);
   }
@@ -217,16 +285,16 @@ const DUST_VERTEX_SHADER = /* glsl */ `
     float travel = position.y - uTime * aSpeed;
     animated.y = mod(travel + 1.06, 2.12) - 1.06;
     animated.x += sin(
-      uTime * (0.13 + abs(aSpeed) * 2.4) + aPhase
+      uTime * (0.55 + abs(aSpeed) * 3.0) + aPhase
     ) * aDrift;
 
     vec4 modelViewPosition = modelViewMatrix * vec4(animated, 1.0);
     gl_Position = projectionMatrix * modelViewPosition;
 
-    float breathing = 0.94 + 0.06 * sin(uTime * 0.31 + aPhase);
+    float breathing = 0.80 + 0.20 * sin(uTime * 1.10 + aPhase);
     gl_PointSize = max(1.0, aSize * uPixelRatio * breathing);
     vOpacity = aOpacity * (
-      0.96 + 0.04 * sin(uTime * 0.19 + aPhase * 1.71)
+      0.78 + 0.22 * sin(uTime * 0.83 + aPhase * 1.71)
     );
     vTone = aTone;
   }
@@ -252,6 +320,26 @@ const instances = new WeakMap();
 
 function clamp(value, minimum, maximum) {
   return Math.min(maximum, Math.max(minimum, value));
+}
+
+export function calculateFilmParticleCount({
+  width,
+  height,
+  viewportWidth,
+  viewportHeight,
+  pixelsPerParticle,
+  minParticles,
+  maxParticles,
+}) {
+  const viewportArea = Math.max(1, viewportWidth * viewportHeight);
+  const effectiveArea = Math.min(width * height, viewportArea * 1.5);
+  const desiredParticles = Math.round(
+    effectiveArea / pixelsPerParticle,
+  );
+
+  return Math.round(
+    clamp(desiredParticles, minParticles, maxParticles),
+  );
 }
 
 export function shouldRenderFilmFrame(elapsedMilliseconds, maxFps) {
@@ -732,21 +820,15 @@ export class FilmLayer {
         this.dustMaterial.uniforms.uPixelRatio.value = devicePixelRatio;
       }
 
-      const viewportArea = Math.max(
-        1,
-        (this.view?.innerWidth || width) * (this.view?.innerHeight || height),
-      );
-      const effectiveArea = Math.min(width * height, viewportArea * 1.5);
-      const desiredParticles = Math.round(
-        effectiveArea / this.options.pixelsPerParticle,
-      );
-      const particleCount = Math.round(
-        clamp(
-          desiredParticles,
-          this.options.minParticles,
-          this.options.maxParticles,
-        ),
-      );
+      const particleCount = calculateFilmParticleCount({
+        width,
+        height,
+        viewportWidth: this.view?.innerWidth || width,
+        viewportHeight: this.view?.innerHeight || height,
+        pixelsPerParticle: this.options.pixelsPerParticle,
+        minParticles: this.options.minParticles,
+        maxParticles: this.options.maxParticles,
+      });
 
       if (particleCount !== this.particleCount) {
         this.rebuildDust(particleCount);
@@ -784,16 +866,16 @@ export class FilmLayer {
       positions[offset + 1] = seededValue(index, 2.31) * 2.0 - 1.0;
       positions[offset + 2] = 0.1;
       const focusScale =
-        seededValue(index, 10.33) > 0.88 ? 1.8 : 1.0;
+        seededValue(index, 10.33) > 0.88 ? 2.0 : 1.0;
       sizes[index] = (
-        1.05 + seededValue(index, 3.91) * 2.25
+        2.00 + seededValue(index, 3.91) * 4.00
       ) * focusScale;
-      opacities[index] = 0.10 + seededValue(index, 4.73) * 0.22;
+      opacities[index] = 0.18 + seededValue(index, 4.73) * 0.34;
 
       const direction = seededValue(index, 5.87) < 0.14 ? -1 : 1;
       speeds[index] =
-        direction * (0.004 + seededValue(index, 6.43) * 0.011);
-      drifts[index] = 0.003 + seededValue(index, 8.19) * 0.009;
+        direction * (0.018 + seededValue(index, 6.43) * 0.037);
+      drifts[index] = 0.010 + seededValue(index, 8.19) * 0.025;
       phases[index] = seededValue(index, 9.71) * Math.PI * 2;
       tones[index] = seededValue(index, 11.57) < 0.46 ? 0.14 : 0.94;
     }
