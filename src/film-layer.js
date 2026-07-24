@@ -47,6 +47,11 @@ const FRAGMENT_SHADER = /* glsl */ `
 
   uniform float uTime;
   uniform vec2 uResolution;
+  uniform vec2 uPointer;
+  uniform float uPointerEnergy;
+  uniform float uScrollImpulse;
+  uniform float uScrollSettle;
+  uniform float uScrollDirection;
   varying vec2 vUv;
 
   float hash21(vec2 point) {
@@ -71,6 +76,51 @@ const FRAGMENT_SHADER = /* glsl */ `
   void main() {
     vec2 resolution = max(uResolution, vec2(1.0));
     float filmFrame = floor(uTime * 18.0);
+    float aspect = resolution.x / resolution.y;
+
+    // Pointer movement bends only the virtual emulsion. Live text and
+    // interface controls remain geometrically stable underneath the canvas.
+    vec2 pointerVector = vUv - uPointer;
+    pointerVector.x *= aspect;
+    float pointerDistance = length(pointerVector);
+    float pointerFalloff = exp(
+      -pointerDistance * pointerDistance * 20.0
+    );
+    float pointerWave = sin(
+      pointerDistance * 46.0 - uTime * 12.0
+    ) * uPointerEnergy * pointerFalloff;
+    vec2 pointerDirection = pointerVector / max(0.001, pointerDistance);
+    pointerDirection.x /= aspect;
+
+    // Scroll start creates broken horizontal registration bands; scroll end
+    // adds a shorter elastic recoil. Both impulses decay in JavaScript.
+    float scrollStrength = max(
+      uScrollImpulse,
+      uScrollSettle * 0.78
+    );
+    float scrollRow = floor(vUv.y * 18.0);
+    float scrollRowNoise = hash21(vec2(
+      scrollRow,
+      floor(uTime * 20.0)
+    ));
+    float scrollTearMask = smoothstep(
+      0.48,
+      0.90,
+      scrollRowNoise
+    ) * scrollStrength;
+    float scrollRecoil = sin(
+      vUv.y * 92.0 + uTime * 28.0
+    ) * uScrollSettle * 0.014;
+
+    vec2 emulsionUv = vUv;
+    emulsionUv += pointerDirection * pointerWave * 0.010;
+    emulsionUv.x += uScrollDirection * (
+      scrollTearMask * (0.012 + uScrollImpulse * 0.024)
+      + scrollRecoil
+    );
+    emulsionUv.y += sin(
+      vUv.x * 37.0 - uTime * 19.0
+    ) * scrollStrength * 0.006;
 
     // The emulsion moves while the document stays perfectly still. A short
     // gate slip is guaranteed in every cycle so the projection reads as
@@ -102,7 +152,7 @@ const FRAGMENT_SHADER = /* glsl */ `
       sin(uTime * 1.73) * 1.25,
       cos(uTime * 1.19) * 0.82 + slipPixels
     );
-    vec2 pixel = floor(vUv * resolution + gateWeave);
+    vec2 pixel = floor(emulsionUv * resolution + gateWeave);
 
     // Fine silver grains are modulated by a softer density field. Combining
     // both scales avoids the uniform digital-static look.
@@ -182,7 +232,7 @@ const FRAGMENT_SHADER = /* glsl */ `
       0.12 + hash21(vec2(chemicalEpoch, 27.17)) * 0.76,
       0.12 + hash21(vec2(chemicalEpoch, 64.73)) * 0.76
     );
-    vec2 chemicalUv = (vUv - chemicalCenter) * vec2(
+    vec2 chemicalUv = (emulsionUv - chemicalCenter) * vec2(
       resolution.x / resolution.y,
       1.0
     );
@@ -238,9 +288,22 @@ const FRAGMENT_SHADER = /* glsl */ `
     float rollBand = (
       1.0 - smoothstep(0.025, 0.160, rollDistance)
     ) * 0.014;
+    float pointerHalo = (
+      1.0 - smoothstep(0.035, 0.220, pointerDistance)
+    ) * uPointerEnergy * 0.032;
+    float scrollAlpha = (
+      scrollTearMask * 0.085
+      + abs(scrollRecoil) * 2.20
+    );
+    float scrollTone = step(0.69, scrollRowNoise);
 
     float baseAlpha = grainAlpha + defectAlpha;
-    float projectionAlpha = exposureAlpha + rollBand;
+    float projectionAlpha = (
+      exposureAlpha
+      + rollBand
+      + pointerHalo
+      + scrollAlpha
+    );
     float combinedAlpha = max(0.0001, baseAlpha + projectionAlpha);
     float baseTone = mix(
       grainTone,
@@ -252,15 +315,21 @@ const FRAGMENT_SHADER = /* glsl */ `
       0.0,
       chemicalCore * chemicalEvent * 0.72
     );
-    float projectionTone = mix(
-      exposureTone,
-      1.0,
-      rollBand / max(0.0001, projectionAlpha)
-    );
+    float projectionTone = (
+      exposureTone * exposureAlpha
+      + rollBand
+      + pointerHalo
+      + scrollTone * scrollAlpha
+    ) / max(0.0001, projectionAlpha);
     float tone = (
       baseTone * baseAlpha + projectionTone * projectionAlpha
     ) / combinedAlpha;
-    float alpha = min(0.140, combinedAlpha);
+    float interactionAlphaLimit = (
+      0.140
+      + scrollStrength * 0.040
+      + uPointerEnergy * 0.010
+    );
+    float alpha = min(interactionAlphaLimit, combinedAlpha);
 
     gl_FragColor = vec4(vec3(tone), alpha);
   }
@@ -277,6 +346,11 @@ const DUST_VERTEX_SHADER = /* glsl */ `
   attribute float aTone;
   uniform float uTime;
   uniform float uPixelRatio;
+  uniform vec2 uPointer;
+  uniform float uPointerEnergy;
+  uniform float uScrollImpulse;
+  uniform float uScrollSettle;
+  uniform float uScrollDirection;
   varying float vOpacity;
   varying float vTone;
 
@@ -287,6 +361,24 @@ const DUST_VERTEX_SHADER = /* glsl */ `
     animated.x += sin(
       uTime * (0.55 + abs(aSpeed) * 3.0) + aPhase
     ) * aDrift;
+
+    vec2 pointerNdc = uPointer * 2.0 - 1.0;
+    vec2 pointerDelta = animated.xy - pointerNdc;
+    float pointerDistance = length(pointerDelta);
+    float pointerInfluence = (
+      1.0 - smoothstep(0.04, 0.58, pointerDistance)
+    ) * uPointerEnergy;
+    vec2 pointerTangent = vec2(
+      -pointerDelta.y,
+      pointerDelta.x
+    ) / max(0.001, pointerDistance);
+    animated.xy += pointerTangent * pointerInfluence * 0.034;
+    animated.x += sin(
+      animated.y * 22.0 + uTime * 18.0
+    ) * uScrollImpulse * 0.030;
+    animated.y += uScrollDirection * (
+      uScrollImpulse - uScrollSettle * 0.60
+    ) * 0.020;
 
     vec4 modelViewPosition = modelViewMatrix * vec4(animated, 1.0);
     gl_Position = projectionMatrix * modelViewPosition;
@@ -504,6 +596,13 @@ export class FilmLayer {
     this.lastFrameTime = null;
     this.frameAccumulator = 0;
     this.elapsedTime = 0;
+    this.pointerTarget = new Vector2(0.5, 0.5);
+    this.pointerCurrent = new Vector2(0.5, 0.5);
+    this.pointerEnergy = 0;
+    this.scrollImpulse = 0;
+    this.scrollSettle = 0;
+    this.scrollDirection = 1;
+    this.scrollActive = false;
     this.drawable = false;
     this.positionAdjusted = false;
     this.destroyed = false;
@@ -716,6 +815,11 @@ export class FilmLayer {
         uniforms: {
           uTime: { value: 0 },
           uResolution: { value: new Vector2(1, 1) },
+          uPointer: { value: new Vector2(0.5, 0.5) },
+          uPointerEnergy: { value: 0 },
+          uScrollImpulse: { value: 0 },
+          uScrollSettle: { value: 0 },
+          uScrollDirection: { value: 1 },
         },
         transparent: true,
         depthTest: false,
@@ -733,6 +837,7 @@ export class FilmLayer {
       this.rendererCleanups.push(
         addEvent(canvas, 'webglcontextlost', this.onContextLost),
       );
+      this.installInteractionListeners();
 
       this.markActive();
       this.onResize();
@@ -755,6 +860,122 @@ export class FilmLayer {
     }
   }
 
+  installInteractionListeners() {
+    if (!this.view || !this.canvas) {
+      return;
+    }
+
+    let lastScrollY =
+      this.view.scrollY || this.view.pageYOffset || 0;
+    let scrollEndTimer = null;
+
+    const clearScrollEndTimer = () => {
+      if (scrollEndTimer !== null && this.view?.clearTimeout) {
+        this.view.clearTimeout(scrollEndTimer);
+      }
+      scrollEndTimer = null;
+    };
+
+    const markInteraction = (value) => {
+      if (
+        this.canvas &&
+        this.canvas.dataset.filmInteraction !== value
+      ) {
+        this.canvas.dataset.filmInteraction = value;
+      }
+    };
+
+    const onPointerMove = (event) => {
+      if (event.pointerType === 'touch') {
+        return;
+      }
+
+      const width = Math.max(1, this.view.innerWidth || 1);
+      const height = Math.max(1, this.view.innerHeight || 1);
+      const nextX = clamp(event.clientX / width, 0, 1);
+      const nextY = clamp(1 - event.clientY / height, 0, 1);
+      const distance = Math.hypot(
+        nextX - this.pointerTarget.x,
+        nextY - this.pointerTarget.y,
+      );
+
+      this.pointerTarget.set(nextX, nextY);
+      this.pointerEnergy = Math.min(
+        1,
+        Math.max(this.pointerEnergy, 0.16 + distance * 8),
+      );
+      markInteraction('pointer');
+    };
+
+    const onPointerLeave = () => {
+      this.pointerTarget.set(0.5, 0.5);
+      this.pointerEnergy = Math.max(this.pointerEnergy, 0.28);
+    };
+
+    const onScrollEnd = () => {
+      if (!this.scrollActive) {
+        return;
+      }
+
+      clearScrollEndTimer();
+      scrollEndTimer = null;
+      this.scrollActive = false;
+      this.scrollImpulse = Math.max(this.scrollImpulse, 0.34);
+      this.scrollSettle = 1;
+      markInteraction('scroll-settle');
+    };
+
+    const onScroll = () => {
+      const nextScrollY =
+        this.view.scrollY || this.view.pageYOffset || 0;
+      const delta = nextScrollY - lastScrollY;
+      lastScrollY = nextScrollY;
+
+      if (delta === 0) {
+        return;
+      }
+
+      this.scrollDirection = Math.sign(delta);
+
+      if (!this.scrollActive) {
+        this.scrollImpulse = 1;
+        markInteraction('scroll-start');
+      } else {
+        this.scrollImpulse = Math.max(
+          this.scrollImpulse,
+          clamp(Math.abs(delta) / 120, 0.36, 1),
+        );
+        markInteraction('scrolling');
+      }
+
+      this.scrollActive = true;
+      clearScrollEndTimer();
+      if (this.view.setTimeout) {
+        scrollEndTimer = this.view.setTimeout(() => {
+          scrollEndTimer = null;
+          onScrollEnd();
+        }, 120);
+      }
+    };
+
+    this.rendererCleanups.push(
+      addEvent(this.view, 'pointermove', onPointerMove, { passive: true }),
+      addEvent(this.view, 'pointerleave', onPointerLeave, { passive: true }),
+      addEvent(this.view, 'scroll', onScroll, { passive: true }),
+      addEvent(this.view, 'scrollend', onScrollEnd, { passive: true }),
+      () => {
+        clearScrollEndTimer();
+        this.pointerTarget.set(0.5, 0.5);
+        this.pointerCurrent.set(0.5, 0.5);
+        this.pointerEnergy = 0;
+        this.scrollImpulse = 0;
+        this.scrollSettle = 0;
+        this.scrollDirection = 1;
+        this.scrollActive = false;
+      },
+    );
+  }
+
   markActive() {
     this.host.classList.add(ACTIVE_CLASS);
     this.host.classList.remove(STATIC_CLASS);
@@ -773,6 +994,18 @@ export class FilmLayer {
 
   onVisibilityChange() {
     this.pageVisible = this.document.visibilityState !== 'hidden';
+    if (!this.pageVisible) {
+      this.pointerTarget.set(0.5, 0.5);
+      this.pointerCurrent.set(0.5, 0.5);
+      this.pointerEnergy = 0;
+      this.scrollImpulse = 0;
+      this.scrollSettle = 0;
+      this.scrollDirection = 1;
+      this.scrollActive = false;
+      if (this.canvas) {
+        this.canvas.dataset.filmInteraction = 'idle';
+      }
+    }
     this.syncAnimationLoop();
   }
 
@@ -907,6 +1140,11 @@ export class FilmLayer {
             MAX_DEVICE_PIXEL_RATIO,
           ),
         },
+        uPointer: { value: new Vector2(0.5, 0.5) },
+        uPointerEnergy: { value: 0 },
+        uScrollImpulse: { value: 0 },
+        uScrollSettle: { value: 0 },
+        uScrollDirection: { value: 1 },
       },
       transparent: true,
       depthTest: false,
@@ -994,9 +1232,39 @@ export class FilmLayer {
     }
 
     this.elapsedTime += delta;
-    this.filmMaterial.uniforms.uTime.value = this.elapsedTime;
-    if (this.dustMaterial?.uniforms.uTime) {
-      this.dustMaterial.uniforms.uTime.value = this.elapsedTime;
+    const filmUniforms = this.filmMaterial.uniforms;
+    filmUniforms.uTime.value = this.elapsedTime;
+    const pointerResponse = 1 - Math.exp(-delta * 14);
+    this.pointerCurrent.lerp(this.pointerTarget, pointerResponse);
+    filmUniforms.uPointer?.value.copy(this.pointerCurrent);
+    if (filmUniforms.uPointerEnergy) {
+      filmUniforms.uPointerEnergy.value = this.pointerEnergy;
+    }
+    if (filmUniforms.uScrollImpulse) {
+      filmUniforms.uScrollImpulse.value = this.scrollImpulse;
+    }
+    if (filmUniforms.uScrollSettle) {
+      filmUniforms.uScrollSettle.value = this.scrollSettle;
+    }
+    if (filmUniforms.uScrollDirection) {
+      filmUniforms.uScrollDirection.value = this.scrollDirection;
+    }
+    const dustUniforms = this.dustMaterial?.uniforms;
+    if (dustUniforms?.uTime) {
+      dustUniforms.uTime.value = this.elapsedTime;
+      dustUniforms.uPointer?.value.copy(this.pointerCurrent);
+      if (dustUniforms.uPointerEnergy) {
+        dustUniforms.uPointerEnergy.value = this.pointerEnergy;
+      }
+      if (dustUniforms.uScrollImpulse) {
+        dustUniforms.uScrollImpulse.value = this.scrollImpulse;
+      }
+      if (dustUniforms.uScrollSettle) {
+        dustUniforms.uScrollSettle.value = this.scrollSettle;
+      }
+      if (dustUniforms.uScrollDirection) {
+        dustUniforms.uScrollDirection.value = this.scrollDirection;
+      }
     }
 
     try {
@@ -1005,6 +1273,19 @@ export class FilmLayer {
       this.permanentFallback = 'renderer-error';
       this.activateStaticFallback(this.permanentFallback);
       return;
+    }
+
+    this.pointerEnergy *= Math.exp(-delta * 3.2);
+    this.scrollImpulse *= Math.exp(-delta * 8.5);
+    this.scrollSettle *= Math.exp(-delta * 4.8);
+    if (
+      !this.scrollActive &&
+      this.pointerEnergy < 0.015 &&
+      this.scrollImpulse < 0.015 &&
+      this.scrollSettle < 0.015 &&
+      this.canvas
+    ) {
+      this.canvas.dataset.filmInteraction = 'idle';
     }
 
     this.frameRequest = this.view.requestAnimationFrame(this.onFrame);
