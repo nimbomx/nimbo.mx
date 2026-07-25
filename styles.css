@@ -16,6 +16,12 @@
   --condensed: "Arial Narrow", "Avenir Next Condensed", "Helvetica Neue", Arial, sans-serif;
   --mono: "SFMono-Regular", "Roboto Mono", "Liberation Mono", "Courier New", monospace;
   --sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* En var(--condensed), la tinta de una mayúscula acentuada sube 0.91em sobre la
+     línea base (Á/É/Í/Ó/Ú), contra 0.72em de una mayúscula sin tilde. Con un
+     interlineado menor, la tilde de una línea invade las letras de la línea
+     anterior y desaparece: negro sobre negro. Cualquier titular en mayúsculas
+     que pueda ocupar dos líneas usa este mínimo. */
+  --display-leading: 0.95;
   color-scheme: dark;
   font-family: var(--sans);
   font-synthesis: none;
@@ -317,6 +323,8 @@ figure {
   animation: expose 850ms cubic-bezier(0.2, 0.72, 0.2, 1) forwards;
 }
 
+/* Única excepción a --display-leading: el logotipo es una sola palabra sin
+   tildes, nunca parte en dos líneas y no puede colisionar consigo mismo. */
 .cinema-title__brand {
   font: 900 clamp(8rem, 17vw, 18rem) / 0.72 var(--condensed);
   letter-spacing: -0.085em;
@@ -607,8 +615,9 @@ figure {
 
 .laboratory-heading h2 {
   max-width: 55rem;
-  font: 900 clamp(3.5rem, 7vw, 7.5rem)/0.82 var(--condensed);
+  font: 900 clamp(3.5rem, 7vw, 7.5rem)/var(--display-leading) var(--condensed);
   letter-spacing: -0.07em;
+  word-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -639,8 +648,9 @@ figure {
 
 .dossier-copy h3 {
   margin: 0;
-  font: 900 clamp(3rem, 5.5vw, 6rem)/0.85 var(--condensed);
+  font: 900 clamp(3rem, 5.5vw, 6rem)/var(--display-leading) var(--condensed);
   letter-spacing: -0.06em;
+  word-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -918,8 +928,9 @@ figure {
 }
 
 .lab-hero h1 {
-  font: 900 clamp(4.8rem, 10vw, 10rem)/0.76 var(--condensed);
+  font: 900 clamp(4.8rem, 10vw, 10rem)/var(--display-leading) var(--condensed);
   letter-spacing: -0.075em;
+  word-spacing: 0.075em;
   text-transform: uppercase;
 }
 
@@ -959,8 +970,9 @@ figure {
 
 .project-slate h2 {
   margin: 1rem 0 1.5rem;
-  font: 900 clamp(3.5rem, 7vw, 7rem)/0.82 var(--condensed);
+  font: 900 clamp(3.5rem, 7vw, 7rem)/var(--display-leading) var(--condensed);
   letter-spacing: -0.06em;
+  word-spacing: 0.06em;
   text-transform: uppercase;
 }
 
