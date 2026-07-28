@@ -46,7 +46,7 @@ beforeAll(async () => {
       PORT: String(puerto),
       ARCHIVO_MENSAJES: archivo,
       ORIGEN_PUBLICO: "https://nimbo.mx",
-      SMTP_HOST: "" // sin correo: el mensaje debe guardarse igual
+      RESEND_API_KEY: "" // sin correo: el mensaje debe guardarse igual
     },
     stdout: "pipe",
     stderr: "pipe"
@@ -202,5 +202,20 @@ describe("formulario y páginas de acuse", () => {
     expect(dockerfile).toMatch(/^FROM oven\/bun:[\d.]+-alpine@sha256:[a-f0-9]{64}$/m);
     expect(dockerfile).toMatch(/^USER bun$/m);
     expect(dockerfile).toMatch(/^HEALTHCHECK/m);
+  });
+
+  test("el servicio no arrastra dependencias", async () => {
+    const paquete = JSON.parse(await read("contacto/package.json"));
+    // Resend se llama con fetch: sin biblioteca no hay lockfile, ni instalación
+    // en la imagen, ni scripts de terceros que puedan ejecutarse al construir.
+    expect(paquete.dependencies).toBeUndefined();
+
+    // Mirar instrucciones, no prosa: el comentario del Dockerfile menciona
+    // `bun install` precisamente para explicar por qué no está.
+    const instrucciones = (await read("contacto/Dockerfile"))
+      .split("\n")
+      .filter((linea) => !linea.trim().startsWith("#"))
+      .join("\n");
+    expect(instrucciones).not.toMatch(/^RUN .*bun install/m);
   });
 });

@@ -5,11 +5,8 @@ FROM oven/bun:1.3.14-alpine@sha256:5acc90a93e91ff07bf72aa90a7c9f0fa189765aec90b4
 
 WORKDIR /app
 
-# nodemailer solo se necesita si hay SMTP configurado; el import es dinámico y
-# el servicio arranca igual sin él.
-COPY package.json bun.lock* ./
-RUN bun install --frozen-lockfile --production || bun install --production
-
+# Sin dependencias: el envío por Resend es una petición HTTPS y Bun trae fetch.
+# No hay `bun install`, así que tampoco hay lockfile ni scripts que ejecutar.
 COPY servidor.js ./
 
 # Sin privilegios: la imagen de Bun trae el usuario `bun` sin root.

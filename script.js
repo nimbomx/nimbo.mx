@@ -51,6 +51,10 @@ const updateMotion = () => {
   for (const toggle of document.querySelectorAll("[data-motion-toggle]")) {
     const state = toggle.querySelector("[data-motion-state]");
     toggle.setAttribute("aria-pressed", String(enabled));
+    // Cuando el sistema pide movimiento reducido el control no puede cambiar
+    // nada: la preferencia del sistema gana siempre. Sin aria-disabled se
+    // anunciaba como un botón normal y al pulsarlo no ocurría nada.
+    toggle.setAttribute("aria-disabled", String(reducedBySystem));
     toggle.setAttribute(
       "aria-label",
       reducedBySystem
@@ -122,6 +126,25 @@ if (navToggle && nav) {
       closeMenu(true);
     }
   });
+
+  // El menú es un panel desplegable sobre el resto de la página: quedaba
+  // abierto al tocar fuera de él o al salir de sus enlaces con el tabulador,
+  // tapando contenido que el visitante ya estaba intentando leer. Escape era
+  // la única forma de cerrarlo sin elegir un destino.
+  const closeIfOutside = (target) => {
+    if (navToggle.getAttribute("aria-expanded") !== "true") {
+      return;
+    }
+    // El propio botón se excluye: cierra aquí y su handler de click volvería
+    // a abrirlo, dejándolo insensible al toque.
+    if (nav.contains(target) || navToggle.contains(target)) {
+      return;
+    }
+    closeMenu();
+  };
+
+  document.addEventListener("pointerdown", (event) => closeIfOutside(event.target));
+  document.addEventListener("focusin", (event) => closeIfOutside(event.target));
 }
 
 for (const year of document.querySelectorAll("[data-year]")) {

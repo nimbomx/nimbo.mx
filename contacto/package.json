@@ -7,9 +7,6 @@
   "scripts": {
     "dev": "bun run servidor.js"
   },
-  "dependencies": {
-    "nodemailer": "7.0.9"
-  },
   "engines": {
     "bun": ">=1.1.0"
   }

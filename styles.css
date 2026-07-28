@@ -82,6 +82,18 @@
      0.91 y era propiedad de "Arial Narrow", una fuente del sistema del
      visitante: el umbral cambiaba según quién abriera la página. */
   --display-leading: 0.95;
+  /* Escala de etiquetas. Todo el rótulo en versalitas del sitio (kickers,
+     figcaptions, chips, dt/dd, códigos de toma) vivía entre 8.8px y 11.5px:
+     por debajo del piso en el que ese estilo —mayúsculas, letter-spacing
+     ancho, peso 700/800 y color secundario— sigue siendo legible. Cuatro
+     escalones conservan la jerarquía que ya existía; ninguno baja de 12px.
+
+     Se usan dentro del atajo `font:`, donde var() resuelve antes de que el
+     atajo se analice. */
+  --label-xs: 0.75rem;
+  --label-sm: 0.78rem;
+  --label-md: 0.81rem;
+  --label-lg: 0.84rem;
   color-scheme: dark;
   font-family: var(--sans);
   font-synthesis: none;
@@ -150,7 +162,7 @@ figure {
   padding: 0.75rem 1rem;
   background: var(--tape);
   color: var(--ink);
-  font: 800 0.75rem/1 var(--condensed);
+  font: 800 var(--label-lg)/1 var(--condensed);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   transform: translateY(-180%);
@@ -252,7 +264,7 @@ figure {
   align-items: center;
   border: 0;
   background: transparent;
-  font: 700 0.68rem/1 var(--condensed);
+  font: 700 var(--label-sm)/1 var(--condensed);
   letter-spacing: 0.13em;
   text-decoration: none;
   text-transform: uppercase;
@@ -313,6 +325,20 @@ figure {
   background: var(--ink);
 }
 
+/* Cuando el sistema pide movimiento reducido, el control no puede cambiar
+   nada. La marca es la forma del distintivo —relleno cuando el ajuste es del
+   visitante, contorno cuando lo impone el sistema— y no una bajada de opacidad:
+   atenuarlo dejaría el texto que explica el estado por debajo de 4.5:1. */
+.motion-toggle[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+.motion-toggle[aria-disabled="true"] [data-motion-state] {
+  color: inherit;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
 .cinema-hero {
   position: relative;
   z-index: 1;
@@ -354,7 +380,7 @@ figure {
 .article-mark,
 .status-chip,
 .frame-id {
-  font: 800 0.68rem/1.3 var(--condensed);
+  font: 800 var(--label-sm)/1.3 var(--condensed);
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
@@ -438,7 +464,7 @@ figure {
   z-index: 3;
   max-width: 16rem;
   color: var(--silver);
-  font: 700 0.58rem/1.65 var(--mono);
+  font: 700 var(--label-xs)/1.65 var(--mono);
   letter-spacing: 0.12em;
   text-align: right;
   text-transform: uppercase;
@@ -475,7 +501,7 @@ figure {
   padding: 0.85rem 1rem;
   align-items: center;
   justify-content: space-between;
-  font: 800 0.7rem/1 var(--condensed);
+  font: 800 var(--label-md)/1 var(--condensed);
   letter-spacing: 0.13em;
   text-decoration: none;
   text-transform: uppercase;
@@ -507,7 +533,7 @@ figure {
   min-height: 44px;
   gap: 0.65rem;
   align-items: center;
-  font: 800 0.68rem/1 var(--condensed);
+  font: 800 var(--label-sm)/1 var(--condensed);
   letter-spacing: 0.11em;
   text-transform: uppercase;
 }
@@ -550,7 +576,7 @@ figure {
   padding-top: 0.5rem;
   align-items: flex-start;
   color: var(--silver);
-  font: 800 0.62rem/1.3 var(--condensed);
+  font: 800 var(--label-xs)/1.3 var(--condensed);
   letter-spacing: 0.13em;
   text-transform: uppercase;
 }
@@ -661,7 +687,7 @@ figure {
 
 .trajectory-reels span {
   color: var(--blue-pencil);
-  font: 700 0.68rem/1.2 var(--mono);
+  font: 700 var(--label-sm)/1.2 var(--mono);
 }
 
 .laboratory-preview {
@@ -748,7 +774,7 @@ figure {
 .status-list dt,
 .status-list dd {
   margin: 0;
-  font: 700 0.69rem/1.3 var(--mono);
+  font: 700 var(--label-md)/1.3 var(--mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -819,7 +845,7 @@ figure {
   justify-content: space-between;
   color: var(--paper);
   background: rgba(5, 5, 5, 0.86);
-  font: 700 0.58rem/1.2 var(--mono);
+  font: 700 var(--label-xs)/1.2 var(--mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -841,7 +867,7 @@ figure {
 
 .editing-notes span {
   color: var(--blue-pencil);
-  font: 800 0.65rem/1 var(--mono);
+  font: 800 var(--label-sm)/1 var(--mono);
 }
 
 .editing-notes strong {
@@ -876,7 +902,7 @@ figure {
 
 .gallery-upcoming span {
   color: var(--blue-pencil);
-  font: 800 0.65rem/1 var(--mono);
+  font: 800 var(--label-sm)/1 var(--mono);
 }
 
 .gallery-upcoming h3 {
@@ -931,7 +957,7 @@ figure {
 
 .practice-cards span {
   color: var(--tape);
-  font: 700 0.63rem/1.3 var(--mono);
+  font: 700 var(--label-sm)/1.3 var(--mono);
 }
 
 .practice-cards h3 {
@@ -1000,7 +1026,7 @@ figure {
   padding: 1.5rem var(--page-x);
   align-items: center;
   border-top: 1px solid var(--line-dark);
-  font: 700 0.62rem/1.3 var(--condensed);
+  font: 700 var(--label-xs)/1.3 var(--condensed);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -1070,7 +1096,7 @@ figure {
   padding: 1.25rem;
   border: 1px solid var(--ink);
   background: rgba(241, 237, 227, 0.86);
-  font: 700 0.72rem/1.65 var(--mono);
+  font: 700 var(--label-md)/1.65 var(--mono);
   text-transform: uppercase;
 }
 
@@ -1155,7 +1181,7 @@ figure {
   padding: 0.45rem 0.65rem;
   color: var(--paper);
   background: var(--black);
-  font: 700 0.55rem/1.2 var(--mono);
+  font: 700 var(--label-xs)/1.2 var(--mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1191,7 +1217,7 @@ figure {
 
 .key-grid span {
   color: var(--tape);
-  font: 700 0.62rem/1 var(--mono);
+  font: 700 var(--label-xs)/1 var(--mono);
 }
 
 .key-grid h3 {
@@ -1267,7 +1293,7 @@ figure {
 
 .entry-facts dt {
   color: var(--silver);
-  font: 700 0.58rem/1.2 var(--mono);
+  font: 700 var(--label-xs)/1.2 var(--mono);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -1298,7 +1324,7 @@ figure {
 
 .entry-toc p {
   margin: 0 0 1rem;
-  font: 800 0.64rem/1 var(--condensed);
+  font: 800 var(--label-sm)/1 var(--condensed);
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
@@ -1319,7 +1345,7 @@ figure {
   min-height: 44px;
   padding: 0.65rem 0;
   align-items: center;
-  font: 700 0.67rem/1.3 var(--mono);
+  font: 700 var(--label-sm)/1.3 var(--mono);
   text-decoration: none;
   text-transform: uppercase;
 }
@@ -1405,7 +1431,7 @@ figure {
 
 .flow span {
   color: var(--blue-pencil);
-  font: 700 0.58rem/1.3 var(--mono);
+  font: 700 var(--label-xs)/1.3 var(--mono);
   text-transform: uppercase;
 }
 
@@ -1431,7 +1457,7 @@ figure {
 
 .entry-image figcaption {
   padding: 0.75rem 0 0;
-  font: 700 0.6rem/1.5 var(--mono);
+  font: 700 var(--label-xs)/1.5 var(--mono);
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
@@ -1453,7 +1479,7 @@ figure {
 
 .edit-table span {
   color: var(--blue-pencil);
-  font: 800 0.64rem/1 var(--mono);
+  font: 800 var(--label-sm)/1 var(--mono);
 }
 
 .edit-table h3 {
@@ -1484,7 +1510,7 @@ figure {
 
 .timeline span,
 .timeline em {
-  font: 700 0.61rem/1.2 var(--mono);
+  font: 700 var(--label-xs)/1.2 var(--mono);
   text-transform: uppercase;
 }
 
@@ -1535,7 +1561,7 @@ figure {
 .error-code {
   margin: 0 0 2rem;
   color: var(--tape);
-  font: 800 0.7rem/1 var(--mono);
+  font: 800 var(--label-md)/1 var(--mono);
   letter-spacing: 0.13em;
   text-transform: uppercase;
 }
@@ -1764,7 +1790,7 @@ figure {
 
   .cinema-title__statement {
     width: 100%;
-    font-size: clamp(0.72rem, 3.25vw, 0.9rem);
+    font-size: clamp(var(--label-md), 3.25vw, 0.9rem);
     letter-spacing: 0.075em;
   }
 
@@ -2058,7 +2084,7 @@ html[data-motion="off"] .cinema-title span {
   padding: 0.6rem 0.75rem;
   color: var(--paper);
   background: linear-gradient(transparent, rgba(5, 5, 5, 0.88));
-  font: 700 0.66rem/1.35 var(--mono);
+  font: 700 var(--label-sm)/1.35 var(--mono);
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -2080,7 +2106,7 @@ html[data-motion="off"] .cinema-title span {
   gap: 0.9rem;
   margin: 0;
   align-items: baseline;
-  font: 800 0.7rem/1 var(--mono);
+  font: 800 var(--label-md)/1 var(--mono);
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
@@ -2142,7 +2168,7 @@ html[data-motion="off"] .cinema-title span {
   width: max-content;
   margin-top: 0.5rem;
   padding: 0.35rem 0.7rem;
-  font: 800 0.62rem/1 var(--mono);
+  font: 800 var(--label-xs)/1 var(--mono);
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
@@ -2218,7 +2244,7 @@ html[data-motion="off"] .cinema-title span {
 
 .contact-field label {
   color: var(--silver-ink);
-  font: 800 0.62rem/1 var(--mono);
+  font: 800 var(--label-xs)/1 var(--mono);
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }

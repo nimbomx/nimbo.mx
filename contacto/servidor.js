@@ -82,31 +82,56 @@ const acuse = (estado) =>
     }
   });
 
+/**
+ * Envío por Resend, que es una petición HTTPS y no necesita biblioteca.
+ *
+ * Se descartó SMTP: la cuenta de correo de nimbo.mx está en Google, que exige
+ * contraseñas de aplicación y verificación en dos pasos para permitir un envío
+ * automatizado. Una clave de API es menos superficie y no caduca sola.
+ *
+ * El remitente vive en nimbo.pro a propósito, para distinguir de un vistazo lo
+ * que entra por el formulario de nimbo.mx. `replyTo` lleva la dirección de quien
+ * escribió, así que responder desde el cliente de correo va directo a esa
+ * persona sin pasar por el remitente técnico.
+ */
+const RESEND = "https://api.resend.com/emails";
+
 const enviarCorreo = async (mensaje) => {
-  const host = process.env.SMTP_HOST;
-  if (!host) return { enviado: false, motivo: "smtp_no_configurado" };
+  const clave = process.env.RESEND_API_KEY;
+  if (!clave) return { enviado: false, motivo: "resend_no_configurado" };
+
+  const control = AbortSignal.timeout(10_000);
 
   try {
-    const { createTransport } = await import("nodemailer");
-    const transporte = createTransport({
-      host,
-      port: Number(process.env.SMTP_PORT || 465),
-      secure: process.env.SMTP_SEGURO !== "false",
-      auth: { user: process.env.SMTP_USUARIO, pass: process.env.SMTP_CLAVE }
+    const respuesta = await fetch(RESEND, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${clave}`,
+        "Content-Type": "application/json"
+      },
+      signal: control,
+      body: JSON.stringify({
+        from: process.env.CORREO_REMITENTE || "Nimbo.mx <contacto.nimbomx@nimbo.pro>",
+        to: [process.env.CORREO_DESTINO || "contacto@nimbo.mx"],
+        reply_to: `${mensaje.nombre} <${mensaje.correo}>`,
+        subject: `nimbo.mx · ${mensaje.nombre}`,
+        text: `${mensaje.mensaje}\n\n—\n${mensaje.nombre} <${mensaje.correo}>\nRecibido: ${mensaje.recibido}`
+      })
     });
 
-    await transporte.sendMail({
-      from: process.env.SMTP_REMITENTE || process.env.SMTP_USUARIO,
-      to: process.env.CORREO_DESTINO || "contacto@nimbo.mx",
-      replyTo: `${mensaje.nombre} <${mensaje.correo}>`,
-      subject: `nimbo.mx · ${mensaje.nombre}`,
-      text: `${mensaje.mensaje}\n\n—\n${mensaje.nombre} <${mensaje.correo}>\nRecibido: ${mensaje.recibido}`
-    });
+    if (respuesta.ok) return { enviado: true };
 
-    return { enviado: true };
+    // El cuerpo del error de Resend es descriptivo y no trae credenciales:
+    // conservarlo es lo que permite distinguir un dominio sin verificar de una
+    // clave revocada sin tener que reproducir el fallo.
+    const detalle = await respuesta.text();
+    return {
+      enviado: false,
+      motivo: `resend_${respuesta.status}`,
+      detalle: detalle.slice(0, 300)
+    };
   } catch (error) {
-    // El texto del error puede contener credenciales; solo se registra el tipo.
-    return { enviado: false, motivo: error?.name || "error_smtp" };
+    return { enviado: false, motivo: error?.name || "error_de_red" };
   }
 };
 
