@@ -32,7 +32,7 @@
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
   <div class="film-layer" data-film-layer aria-hidden="true"></div>
 
-  <header class="site-header site-header--dark">
+  <header class="site-header site-header--paper">
     <a class="wordmark" href="/" aria-label="Nimbo, inicio">NIMBO</a>
     <nav class="site-nav" aria-label="Navegación principal">
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-list">
@@ -178,10 +178,101 @@
         </div>
       </div>
 
+      <section class="carrete" data-carrete aria-labelledby="carrete-title">
+        <h2 id="carrete-title" class="visually-hidden">Carrete: el rastro de la construcción</h2>
+
+        <div class="carrete-visual">
+          <div class="carrete-marco">
+            <div class="carrete-tomas">
+              <figure class="carrete-toma" data-toma="0">
+                <img src="/assets/scrolly/origen-servilleta.webp" alt="Servilleta con el planteamiento inicial escrito a mano" width="1200" height="1200" loading="lazy" decoding="async">
+                <figcaption>Reconstrucción · el planteamiento inicial</figcaption>
+              </figure>
+              <figure class="carrete-toma" data-toma="1">
+                <img src="/assets/scrolly/origen-cuaderno.webp" alt="Cuaderno con notas y el primer mapa del sitio" width="1200" height="800" loading="lazy" decoding="async">
+                <figcaption>Reconstrucción · notas y primer mapa del sitio</figcaption>
+              </figure>
+              <figure class="carrete-toma" data-toma="2">
+                <img src="/assets/scrolly/origen-pizarron.webp" alt="Pizarrón con el recorrido del sitio dibujado" width="1200" height="676" loading="lazy" decoding="async">
+                <figcaption>Reconstrucción · el recorrido en el pizarrón</figcaption>
+              </figure>
+              <figure class="carrete-toma" data-toma="3">
+                <img src="/assets/scrolly/origen-wireframe.webp" alt="Maquetas dibujadas a mano, sin color" width="1200" height="800" loading="lazy" decoding="async">
+                <figcaption>Reconstrucción · maquetas a mano, sin color</figcaption>
+              </figure>
+              <figure class="carrete-toma" data-toma="4">
+                <img src="/assets/scrolly/foto-documental.webp" alt="Fotografía documental de trabajo real" width="1200" height="800" loading="lazy" decoding="async">
+                <figcaption>Fotografía documental · trabajo real</figcaption>
+              </figure>
+              <figure class="carrete-toma" data-toma="5">
+                <img src="/assets/scrolly/foto-aspiracional.webp" alt="Fotografía aspiracional de un entorno de trabajo" width="1200" height="800" loading="lazy" decoding="async">
+                <figcaption>Lo aspiracional también es información</figcaption>
+              </figure>
+              <figure class="carrete-toma" data-toma="6">
+                <img src="/assets/scrolly/marcas-linea.webp" alt="Exploración de marca sobre el glifo delta, resuelta en línea" width="1200" height="1200" loading="lazy" decoding="async">
+                <figcaption>Exploración sobre el glifo delta</figcaption>
+              </figure>
+              <figure class="carrete-toma" data-toma="7">
+                <img src="/assets/scrolly/capirote.webp" alt="Versión del personaje que no llegó a publicarse" width="1200" height="1200" loading="lazy" decoding="async">
+                <figcaption>El personaje que no se publicó</figcaption>
+              </figure>
+              <figure class="carrete-toma" data-toma="8">
+                <img src="/assets/scrolly/personaje-acuarela.webp" alt="Seis versiones del personaje pintadas en acuarela" width="1200" height="1200" loading="lazy" decoding="async">
+                <figcaption>Seis versiones, variando cuánta cara tiene</figcaption>
+              </figure>
+            </div>
+          </div>
+          <p class="carrete-etapa" data-etapa><b>01</b><span>Antes de la página</span></p>
+          <div class="carrete-avance" data-avance role="progressbar" aria-label="Avance del carrete" aria-valuemin="1" aria-valuemax="9" aria-valuenow="1"></div>
+        </div>
+
+        <div class="carrete-guion">
+          <article class="carrete-paso" data-paso data-etapa="Antes de la página">
+            <h3>El problema no era no tener sitio.</h3>
+            <p>El planteamiento existía antes que cualquier pantalla: qué tenía que resolver y para quién.</p>
+          </article>
+          <article class="carrete-paso" data-paso data-etapa="La idea">
+            <h3>Un núcleo, no un catálogo.</h3>
+            <p>Las notas y el primer mapa buscaban una sola idea central en lugar de una lista de servicios.</p>
+          </article>
+          <article class="carrete-paso" data-paso data-etapa="Arquitectura">
+            <h3>Qué tenía que hacer la página.</h3>
+            <p>El recorrido completo cupo en un pizarrón antes de escribir una línea de código.</p>
+          </article>
+          <article class="carrete-paso" data-paso data-etapa="Primeras maquetas">
+            <h3>Bloques antes que estilo.</h3>
+            <p>Maquetas a mano y sin color, para discutir estructura sin que el acabado tapara la discusión.</p>
+          </article>
+          <article class="carrete-paso" data-paso data-etapa="Segundo intento">
+            <h3>Fotografía documental.</h3>
+            <p>Imágenes de trabajo real en lugar de fotografía de catálogo.</p>
+          </article>
+          <article class="carrete-paso" data-paso data-etapa="Lo último">
+            <h3>Lo aspiracional también es información.</h3>
+            <p>No todo tenía que ser documental: parte de lo que se comunica es hacia dónde va el trabajo.</p>
+          </article>
+          <article class="carrete-paso" data-paso data-etapa="Primer intento de marca">
+            <h3>Delta, primer intento: geometría.</h3>
+            <p>Una exploración sobre el glifo delta, resuelta en línea geométrica.</p>
+            <p class="carrete-veredicto carrete-veredicto--descartado">Descartada por genérica</p>
+          </article>
+          <article class="carrete-paso" data-paso data-etapa="Lo que no salió">
+            <h3>Cuando la silueta dice algo que nadie escribió.</h3>
+            <p>Una versión del personaje cuya silueta comunicaba algo que nadie había decidido comunicar.</p>
+            <p class="carrete-veredicto carrete-veredicto--descartado">No se publicó</p>
+          </article>
+          <article class="carrete-paso" data-paso data-etapa="La solución">
+            <h3>Ilustración editorial, no vector.</h3>
+            <p>Seis versiones variando cuánta cara tiene el personaje, hasta dar con la que funcionaba.</p>
+            <p class="carrete-veredicto carrete-veredicto--quedo">Quedó</p>
+          </article>
+        </div>
+      </section>
+
       <footer class="entry-end">
         <h2>Continuará con evidencia.</h2>
         <p>Este no es el relato retrospectivo de un producto perfecto. Es el registro de un sistema mientras aprende a tomar forma.</p>
-        <a class="action-link action-link--light" href="/laboratorio/">Volver al Laboratorio <span aria-hidden="true">↗</span></a>
+        <a class="action-link action-link--light" href="/laboratorio/">Volver al archivo <span aria-hidden="true">↗</span></a>
       </footer>
     </article>
   </main>

@@ -30,13 +30,49 @@ const ASCENSO_MAYUSCULA_ACENTUADA = 0.885;
 // dos líneas y por lo tanto incapaz de colisionar consigo mismo.
 const EXENTOS = new Set([".cinema-title__brand"]);
 
+/**
+ * Recorre el CSS contando llaves en lugar de buscarlas con una expresión
+ * regular. Una regex plana no distingue un bloque anidado —@media, @keyframes,
+ * @supports— del final de una regla, así que en cuanto aparece uno desalinea
+ * todo lo que viene después y empieza a devolver comentarios como si fueran
+ * selectores. Esta versión desciende dentro de las reglas @ y solo emite las
+ * hojas, que son las que declaran interlineado y tracking.
+ */
 const reglas = (css) => {
+  const limpio = css.replace(/\/\*[\s\S]*?\*\//g, "");
   const encontradas = [];
-  const patron = /(^|\})\s*([^{}]+?)\s*\{([^}]*)\}/g;
-  let match;
-  while ((match = patron.exec(css)) !== null) {
-    encontradas.push({ selector: match[2].trim(), cuerpo: match[3] });
-  }
+
+  const recorrer = (texto) => {
+    let inicio = 0;
+
+    for (let i = 0; i < texto.length; i += 1) {
+      if (texto[i] !== "{") continue;
+
+      const selector = texto.slice(inicio, i).trim();
+      let profundidad = 1;
+      let j = i + 1;
+
+      while (j < texto.length && profundidad > 0) {
+        if (texto[j] === "{") profundidad += 1;
+        else if (texto[j] === "}") profundidad -= 1;
+        j += 1;
+      }
+
+      const cuerpo = texto.slice(i + 1, j - 1);
+
+      if (selector.startsWith("@")) {
+        // Las reglas @ agrupan otras reglas: lo interesante está dentro.
+        if (/\{/.test(cuerpo)) recorrer(cuerpo);
+      } else if (selector) {
+        encontradas.push({ selector, cuerpo });
+      }
+
+      inicio = j;
+      i = j - 1;
+    }
+  };
+
+  recorrer(limpio);
   return encontradas;
 };
 

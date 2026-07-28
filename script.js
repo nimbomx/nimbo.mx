@@ -127,3 +127,71 @@ if (navToggle && nav) {
 for (const year of document.querySelectorAll("[data-year]")) {
   year.textContent = String(new Date().getFullYear());
 }
+
+/**
+ * Carrete: scrollytelling con el panel de imagen fijo mientras el texto avanza.
+ *
+ * El paso activo se decide por IntersectionObserver contra una banda estrecha
+ * en el centro del viewport, no por la posición del scroll: así el cambio de
+ * toma ocurre cuando el texto correspondiente está realmente leyéndose, y no
+ * depende de la altura de cada bloque.
+ *
+ * Sin JavaScript el carrete sigue siendo legible: las tomas se apilan y el CSS
+ * las muestra todas en secuencia. Lo que este código añade es la sincronía.
+ */
+for (const carrete of document.querySelectorAll("[data-carrete]")) {
+  const pasos = [...carrete.querySelectorAll("[data-paso]")];
+  const tomas = [...carrete.querySelectorAll("[data-toma]")];
+  const etapa = carrete.querySelector("[data-etapa]");
+  const avance = carrete.querySelector("[data-avance]");
+
+  if (!pasos.length || !tomas.length) {
+    continue;
+  }
+
+  // Con el guion ya sincronizable, el CSS puede ocultar las tomas inactivas.
+  carrete.dataset.carrete = "activo";
+
+  let actual = -1;
+
+  const mostrar = (indice) => {
+    if (indice === actual) {
+      return;
+    }
+    actual = indice;
+
+    for (const toma of tomas) {
+      toma.classList.toggle("es-actual", toma.dataset.toma === String(indice));
+    }
+
+    const paso = pasos[indice];
+    if (etapa && paso) {
+      etapa.querySelector("b").textContent = String(indice + 1).padStart(2, "0");
+      etapa.querySelector("span").textContent = paso.dataset.etapa || "";
+    }
+    if (avance) {
+      avance.style.setProperty("--avance", `${((indice + 1) / pasos.length) * 100}%`);
+      avance.setAttribute("aria-valuenow", String(indice + 1));
+    }
+  };
+
+  const observador = new IntersectionObserver(
+    (entradas) => {
+      // Puede haber varios pasos dentro de la banda; gana el más cercano a su centro.
+      const visibles = entradas
+        .filter((entrada) => entrada.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+      if (visibles.length) {
+        mostrar(pasos.indexOf(visibles[0].target));
+      }
+    },
+    { rootMargin: "-45% 0px -45% 0px", threshold: [0, 0.25, 0.5, 1] }
+  );
+
+  for (const paso of pasos) {
+    observador.observe(paso);
+  }
+
+  mostrar(0);
+}

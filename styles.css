@@ -165,6 +165,18 @@ figure {
   outline-offset: 5px;
 }
 
+/* Sale del flujo visual pero sigue en el árbol de accesibilidad: para títulos
+   que la composición no muestra pero que un lector de pantalla necesita para
+   no encontrarse una sección sin nombre. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .film-layer {
   position: fixed;
   z-index: 80;
@@ -1933,4 +1945,244 @@ html[data-motion="off"] .film-layer {
 html[data-motion="off"] .cinema-title span {
   opacity: 1;
   transform: none;
+}
+
+/* ── Carrete ─────────────────────────────────────────────────────────────
+   Scrollytelling: el marco queda fijo y el guion avanza a su lado.
+
+   Las tomas viven en blanco y negro con contraste alto —el sitio entero es
+   monocromo— y recuperan su color al pasar el cursor. La regla vive dentro de
+   @media (hover: hover) porque en pantallas táctiles no existe ese gesto: allí
+   la imagen se queda en su versión de cine en lugar de parpadear al tocarla.
+   El foco de teclado revela el color igual que el cursor, para que no dependa
+   de tener ratón.                                                            */
+
+.carrete {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  padding: clamp(3rem, 7vw, 7rem) var(--page-x);
+  color: var(--paper);
+  background: var(--black);
+}
+
+.carrete-visual {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 2rem 0;
+}
+
+/* Perforaciones arriba y abajo: el marco es un fotograma, no una ventana. */
+.carrete-marco {
+  position: relative;
+  overflow: hidden;
+  padding: 1.15rem 0;
+  background: #07070a;
+  border: 1px solid var(--line-dark);
+}
+
+.carrete-marco::before,
+.carrete-marco::after {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 1.15rem;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--paper) 0 0.62rem,
+    transparent 0.62rem 1.5rem
+  );
+  background-size: 1.5rem 0.52rem;
+  background-repeat: repeat-x;
+  background-position: 0 center;
+  content: "";
+}
+
+.carrete-marco::before { top: 0; }
+.carrete-marco::after { bottom: 0; }
+
+/* El carrete corre mientras se avanza. Se detiene con el interruptor de
+   movimiento del encabezado y con prefers-reduced-motion. */
+[data-motion="on"] .carrete-marco::before,
+[data-motion="on"] .carrete-marco::after {
+  animation: correr-carrete 1.6s linear infinite;
+}
+
+@keyframes correr-carrete {
+  to { background-position: 1.5rem center; }
+}
+
+.carrete-tomas {
+  position: relative;
+  aspect-ratio: 4 / 3;
+}
+
+.carrete-toma {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+}
+
+.carrete-toma img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.28) brightness(0.94);
+  transition: filter 420ms ease;
+}
+
+@media (hover: hover) {
+  .carrete-toma:hover img,
+  .carrete-toma:focus-within img {
+    filter: none;
+  }
+}
+
+.carrete-toma:focus-within img {
+  filter: none;
+}
+
+.carrete-toma figcaption {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 0.6rem 0.75rem;
+  color: var(--paper);
+  background: linear-gradient(transparent, rgba(5, 5, 5, 0.88));
+  font: 700 0.66rem/1.35 var(--mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Sin JavaScript las tomas se apilan y se leen todas; con él, solo la actual. */
+[data-carrete="activo"] .carrete-toma {
+  opacity: 0;
+  transition: opacity 520ms ease;
+  pointer-events: none;
+}
+
+[data-carrete="activo"] .carrete-toma.es-actual {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.carrete-etapa {
+  display: flex;
+  gap: 0.9rem;
+  margin: 0;
+  align-items: baseline;
+  font: 800 0.7rem/1 var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.carrete-etapa b {
+  color: var(--tape);
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.carrete-avance {
+  height: 2px;
+  background: var(--line-dark);
+}
+
+.carrete-avance::after {
+  display: block;
+  width: var(--avance, 0%);
+  height: 100%;
+  background: var(--tape);
+  content: "";
+  transition: width 520ms ease;
+}
+
+.carrete-guion {
+  display: flex;
+  flex-direction: column;
+}
+
+.carrete-paso {
+  display: flex;
+  min-height: 82vh;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.carrete-paso h3 {
+  margin: 0 0 1rem;
+  font-family: var(--serif);
+  font-size: clamp(1.9rem, 3.2vw, 3rem);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.carrete-paso p {
+  max-width: 32rem;
+  margin: 0 0 1rem;
+  color: var(--silver);
+  font-family: var(--serif);
+  font-size: 1.1rem;
+}
+
+/* El veredicto es un párrafo dentro del paso, así que compite con
+   `.carrete-paso p` (0,1,1). Sin elevar la especificidad heredaba el gris y el
+   cuerpo del texto corrido, y el sello quedaba ilegible sobre el amarillo. */
+.carrete-paso .carrete-veredicto {
+  width: max-content;
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.7rem;
+  font: 800 0.62rem/1 var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.carrete-paso .carrete-veredicto--quedo {
+  color: var(--black);
+  background: var(--tape);
+}
+
+.carrete-paso .carrete-veredicto--descartado {
+  color: var(--silver);
+  border: 1px solid var(--line-dark);
+}
+
+@media (max-width: 60rem) {
+  .carrete {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .carrete-visual {
+    height: 62vh;
+    padding: 1rem 0;
+  }
+
+  .carrete-paso {
+    min-height: 0;
+    padding: 2.5rem 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carrete-marco::before,
+  .carrete-marco::after {
+    animation: none;
+  }
+
+  .carrete-toma img,
+  [data-carrete="activo"] .carrete-toma,
+  .carrete-avance::after {
+    transition: none;
+  }
 }
