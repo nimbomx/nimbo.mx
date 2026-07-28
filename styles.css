@@ -55,6 +55,11 @@
   --paper-deep: #ded7c9;
   --silver: #c7c7c0;
   --silver-dark: #777872;
+  /* Texto secundario sobre fondo papel. --silver-dark solo alcanza 3.81:1
+     contra --paper y --silver se queda en 1.45:1, ambos por debajo del 4.5:1
+     que exige WCAG AA para texto normal. Este tono da 5.69:1 y sigue leyéndose
+     como secundario. */
+  --silver-ink: #5c5d57;
   --blue-pencil: #1749a4;
   --tape: #e1c34a;
   --line-dark: rgba(241, 237, 227, 0.22);
@@ -832,6 +837,55 @@ figure {
   margin: 2.5rem 0 0.5rem;
   font: 900 clamp(1.5rem, 2.5vw, 2.4rem)/1 var(--condensed);
   text-transform: uppercase;
+}
+
+/* Expedientes cuyo texto todavía no existe. Se muestran con el mismo peso
+   tipográfico que los publicados pero sin imagen ni enlace: la ausencia se
+   declara en lugar de disimularse con relleno. */
+.gallery-upcoming {
+  margin-top: 3.5rem;
+}
+
+.gallery-upcoming ol {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1px;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+  background: var(--line-ink);
+  border: 1px solid var(--line-ink);
+}
+
+.gallery-upcoming li {
+  padding: 1.5rem;
+  background: var(--paper);
+}
+
+.gallery-upcoming span {
+  color: var(--blue-pencil);
+  font: 800 0.65rem/1 var(--mono);
+}
+
+.gallery-upcoming h3 {
+  margin: 1.75rem 0 0.4rem;
+  font: 900 clamp(1.5rem, 2.5vw, 2.4rem)/var(--display-leading) var(--condensed);
+  letter-spacing: -0.04em;
+  word-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.gallery-upcoming p {
+  margin: 0;
+  color: var(--silver-ink);
+  font-family: var(--serif);
+}
+
+.contact-pace {
+  max-width: 34rem;
+  margin: 0.75rem auto 0;
+  color: var(--silver-ink);
+  font-size: 0.98rem;
 }
 
 .editing-notes p {

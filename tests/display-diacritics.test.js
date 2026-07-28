@@ -108,6 +108,6 @@ describe("diacríticos en titulares de versalitas", () => {
     // Las mayúsculas son presentación; el contenido se escribe en minúsculas
     // acentuadas para que lectores de pantalla y buscadores reciban español.
     expect(laboratorio).toContain("Nada aquí está inmóvil.");
-    expect(home).toContain("Aquí se ve cómo se construye.");
+    expect(home).toContain("Cada uno resolvía algo que nadie más iba a resolver.");
   });
 });

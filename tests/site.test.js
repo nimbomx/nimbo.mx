@@ -59,17 +59,21 @@ describe("estructura editorial", () => {
   test("la portada implementa Cámara oscura y abre el recorrido hacia el Laboratorio", async () => {
     const html = await read("index.html");
 
-    expect(html).toContain("Construir");
-    expect(html).toContain("también es");
-    expect(html).toContain("investigar.");
-    for (const id of ["manifiesto", "trayectoria", "practica", "contacto"]) {
+    // La tesis afirma en lugar de negar: el sitio vende trabajo a medida ya
+    // construido, no una postura sobre el proceso. Ver docs/releases.
+    expect(html).toContain("Construimos");
+    expect(html).toContain("lo que no");
+    expect(html).toContain("venía hecho.");
+    for (const id of ["trayectoria", "galeria", "practica", "contacto"]) {
       expect(html).toContain(`id="${id}"`);
     }
+    // El manifiesto se retiró: su registro era el único que no describía obra.
+    expect(html).not.toContain('id="manifiesto"');
     expect(html).toContain('class="cinema-hero"');
     expect(html).toContain('class="hero-still"');
     expect(html).toContain('class="cinema-title__brand">Nimbo</span>');
     expect(html).toContain(
-      'class="cinema-title__statement">Construir también es investigar.</span>'
+      'class="cinema-title__statement">Construimos lo que no venía hecho.</span>'
     );
     expect(html).toContain('fetchpriority="high"');
     expect(html).toContain('decoding="async"');
