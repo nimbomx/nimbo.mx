@@ -1,0 +1,16 @@
+{
+  "name": "nimbo-mx-contacto",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Endpoint de contacto de nimbo.mx",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run servidor.js"
+  },
+  "dependencies": {
+    "nodemailer": "7.0.9"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  }
+}

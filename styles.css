@@ -2186,3 +2186,86 @@ html[data-motion="off"] .cinema-title span {
     transition: none;
   }
 }
+
+/* ── Formulario de contacto ──────────────────────────────────────────────
+   Envía como POST nativo, no por fetch: la CSP declara `connect-src 'none'`
+   y el formulario debe funcionar con JavaScript desactivado.                */
+
+.contact-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem 1.5rem;
+  max-width: 44rem;
+  margin: 2.5rem auto 0;
+  text-align: left;
+}
+
+.contact-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.contact-field--ancho,
+.contact-envio {
+  grid-column: 1 / -1;
+}
+
+.contact-field label {
+  color: var(--silver-ink);
+  font: 800 0.62rem/1 var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.contact-field input,
+.contact-field textarea {
+  padding: 0.7rem 0.75rem;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line-ink);
+  border-radius: 0;
+  font-family: var(--serif);
+  font-size: 1rem;
+  /* Sin esto Safari en iOS agranda la página al enfocar un campo. */
+  -webkit-appearance: none;
+}
+
+.contact-field textarea {
+  resize: vertical;
+}
+
+.contact-field input:focus-visible,
+.contact-field textarea:focus-visible {
+  border-color: var(--ink);
+}
+
+/* Trampa para robots. Se saca de la pantalla en lugar de ocultarla con
+   display:none, que muchos rellenadores automáticos ya detectan y saltan. */
+.contact-trampa {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.contact-envio {
+  margin: 0.5rem 0 0;
+}
+
+/* `:root` declara color-scheme: dark, así que un <button> sin fondo explícito
+   lo pinta el navegador en su gris de control (#6b6b6b). Sobre él la tinta
+   quedaba en 3.53:1, por debajo del 4.5:1 de WCAG AA: el botón parecía un
+   control del sistema en medio de una sección de papel. */
+.contact-envio button {
+  background: transparent;
+  cursor: pointer;
+}
+
+@media (max-width: 42rem) {
+  .contact-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

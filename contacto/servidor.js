@@ -1,0 +1,210 @@
+/**
+ * Endpoint de contacto de nimbo.mx.
+ *
+ * Recibe el formulario como POST nativo, no por fetch: la CSP del sitio declara
+ * `connect-src 'none'`, así que no hay XHR posible ni lo queremos. El formulario
+ * funciona con JavaScript desactivado y responde con un 303 hacia una página de
+ * acuse, que es el comportamiento correcto de un POST.
+ *
+ * Cada mensaje se escribe primero en disco y solo después se intenta enviar por
+ * correo. Si el correo falla, el mensaje ya está guardado: una caída del SMTP
+ * nunca puede perder a alguien que escribió.
+ */
+
+import { appendFile, mkdir } from "node:fs/promises";
+import { dirname } from "node:path";
+
+const PUERTO = Number(process.env.PORT || 8080);
+const ARCHIVO = process.env.ARCHIVO_MENSAJES || "/datos/mensajes.jsonl";
+const ORIGEN = process.env.ORIGEN_PUBLICO || "https://nimbo.mx";
+
+const LIMITES = {
+  cuerpo: 16 * 1024, // 16 KiB: un mensaje de contacto no necesita más
+  nombre: 120,
+  correo: 254, // longitud máxima de una dirección según RFC 5321
+  mensaje: 5000,
+  porVentana: 5,
+  ventanaMs: 10 * 60 * 1000
+};
+
+const CABECERAS_SEGURAS = {
+  "Cache-Control": "no-store",
+  "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY"
+};
+
+// Ventana deslizante por IP. En memoria a propósito: un reinicio limpia el
+// contador, que para un formulario de contacto es una consecuencia aceptable y
+// evita arrastrar una dependencia solo para esto.
+const intentos = new Map();
+
+const dentroDelLimite = (ip, ahora) => {
+  const recientes = (intentos.get(ip) || []).filter(
+    (t) => ahora - t < LIMITES.ventanaMs
+  );
+  recientes.push(ahora);
+  intentos.set(ip, recientes);
+
+  if (intentos.size > 5000) {
+    // Poda perezosa para que el mapa no crezca sin techo.
+    for (const [clave, marcas] of intentos) {
+      if (marcas.every((t) => ahora - t >= LIMITES.ventanaMs)) intentos.delete(clave);
+    }
+  }
+
+  return recientes.length <= LIMITES.porVentana;
+};
+
+// Validación deliberadamente laxa: comprobar que hay una arroba con algo a cada
+// lado y ningún espacio. Cualquier regex más estricta rechaza direcciones
+// válidas, y la única prueba real de que un correo existe es escribirle.
+const correoPlausible = (valor) =>
+  valor.length <= LIMITES.correo && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor);
+
+// Cada desenlace tiene su propia URL en lugar de un parámetro que haya que leer
+// con JavaScript. Así la página dice la verdad aunque el visitante lo tenga
+// desactivado, y recargar no reenvía el formulario.
+const DESTINOS = {
+  recibido: "/gracias/",
+  incompleto: "/gracias/no-enviado/",
+  limite: "/gracias/no-enviado/",
+  error: "/gracias/no-enviado/"
+};
+
+const acuse = (estado) =>
+  new Response(null, {
+    status: 303,
+    headers: {
+      ...CABECERAS_SEGURAS,
+      Location: ORIGEN + (DESTINOS[estado] || DESTINOS.error)
+    }
+  });
+
+const enviarCorreo = async (mensaje) => {
+  const host = process.env.SMTP_HOST;
+  if (!host) return { enviado: false, motivo: "smtp_no_configurado" };
+
+  try {
+    const { createTransport } = await import("nodemailer");
+    const transporte = createTransport({
+      host,
+      port: Number(process.env.SMTP_PORT || 465),
+      secure: process.env.SMTP_SEGURO !== "false",
+      auth: { user: process.env.SMTP_USUARIO, pass: process.env.SMTP_CLAVE }
+    });
+
+    await transporte.sendMail({
+      from: process.env.SMTP_REMITENTE || process.env.SMTP_USUARIO,
+      to: process.env.CORREO_DESTINO || "contacto@nimbo.mx",
+      replyTo: `${mensaje.nombre} <${mensaje.correo}>`,
+      subject: `nimbo.mx · ${mensaje.nombre}`,
+      text: `${mensaje.mensaje}\n\n—\n${mensaje.nombre} <${mensaje.correo}>\nRecibido: ${mensaje.recibido}`
+    });
+
+    return { enviado: true };
+  } catch (error) {
+    // El texto del error puede contener credenciales; solo se registra el tipo.
+    return { enviado: false, motivo: error?.name || "error_smtp" };
+  }
+};
+
+// Append de una sola línea, sin leer lo ya escrito. Reescribir el archivo
+// entero sería O(n) y, con dos envíos simultáneos, el segundo sobrescribiría al
+// primero: el mensaje de alguien desaparecería sin dejar rastro.
+const guardar = async (mensaje) => {
+  await appendFile(ARCHIVO, JSON.stringify(mensaje) + "\n", "utf8");
+};
+
+// El volumen puede venir vacío en el primer arranque.
+await mkdir(dirname(ARCHIVO), { recursive: true });
+
+const servidor = Bun.serve({
+  port: PUERTO,
+  idleTimeout: 30,
+
+  async fetch(peticion, server) {
+    const url = new URL(peticion.url);
+
+    if (url.pathname === "/salud") {
+      return new Response("ok\n", { headers: CABECERAS_SEGURAS });
+    }
+
+    if (url.pathname !== "/api/contacto") {
+      return new Response(null, { status: 404, headers: CABECERAS_SEGURAS });
+    }
+
+    if (peticion.method !== "POST") {
+      return new Response(null, {
+        status: 405,
+        headers: { ...CABECERAS_SEGURAS, Allow: "POST" }
+      });
+    }
+
+    // El límite se comprueba antes de leer el cuerpo, no después.
+    const declarado = Number(peticion.headers.get("content-length") || 0);
+    if (declarado > LIMITES.cuerpo) {
+      return new Response(null, { status: 413, headers: CABECERAS_SEGURAS });
+    }
+
+    const tipo = peticion.headers.get("content-type") || "";
+    if (!tipo.startsWith("application/x-www-form-urlencoded")) {
+      return new Response(null, { status: 415, headers: CABECERAS_SEGURAS });
+    }
+
+    const ip =
+      peticion.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      server.requestIP(peticion)?.address ||
+      "desconocida";
+
+    if (!dentroDelLimite(ip, Date.now())) {
+      return acuse("limite");
+    }
+
+    let campos;
+    try {
+      campos = new URLSearchParams(await peticion.text());
+    } catch {
+      return acuse("error");
+    }
+
+    // Trampa para robots: un campo que ninguna persona ve ni rellena. Si viene
+    // con contenido se acepta la petición con normalidad y no se guarda nada,
+    // para no darle al emisor ninguna señal de que fue detectado.
+    if ((campos.get("empresa") || "").trim() !== "") {
+      return acuse("recibido");
+    }
+
+    const nombre = (campos.get("nombre") || "").trim().slice(0, LIMITES.nombre);
+    const correo = (campos.get("correo") || "").trim().slice(0, LIMITES.correo);
+    const mensaje = (campos.get("mensaje") || "").trim().slice(0, LIMITES.mensaje);
+
+    if (!nombre || !mensaje || !correoPlausible(correo)) {
+      return acuse("incompleto");
+    }
+
+    const registro = {
+      recibido: new Date().toISOString(),
+      nombre,
+      correo,
+      mensaje
+    };
+
+    try {
+      await guardar(registro);
+    } catch (error) {
+      console.error("no se pudo guardar el mensaje:", error?.name || "error");
+      return acuse("error");
+    }
+
+    const correoResultado = await enviarCorreo(registro);
+    if (!correoResultado.enviado) {
+      console.warn("mensaje guardado sin enviar por correo:", correoResultado.motivo);
+    }
+
+    return acuse("recibido");
+  }
+});
+
+console.log(`contacto escuchando en :${servidor.port}`);
