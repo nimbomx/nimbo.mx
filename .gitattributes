@@ -1,0 +1,8 @@
+# Los textos de licencia se distribuyen tal cual los publica su autor. La SIL
+# Open Font License exige acompañar la licencia, no una versión reformateada,
+# así que sus espacios finales no son un descuido nuestro y git no debe
+# señalarlos en diff --check ni ofrecerse a corregirlos.
+assets/fonts/OFL-*.txt -whitespace
+
+# Binarios: nunca normalizar finales de línea ni intentar diffear.
+*.woff2 binary

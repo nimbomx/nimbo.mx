@@ -779,7 +779,11 @@ describe("operación y seguridad", () => {
     expect(nginx).toContain('"no-cache"');
     expect(nginx).toMatch(/^\s*gzip\s+on;$/m);
     expect(nginx).toContain("application/javascript");
-    expect(nginx).toMatch(/location ~\* \\\.\(\?:css\|js\|svg\|png\|webp\)\$/);
+    expect(nginx).toMatch(/location ~\* \\\.\(\?:css\|js\|svg\|png\|webp\|woff2\)\$/);
+    // Las tipografías son la excepción a la caché corta: su contenido no cambia
+    // sin cambiar de nombre de archivo, así que se sirven como inmutables.
+    const fontPolicy = nginx.split("\n").find((line) => line.includes("\\.woff2$"));
+    expect(fontPolicy).toContain("immutable");
   });
 
   test("CSP autoriza solo scripts locales y el JSON-LD mediante su hash exacto", async () => {
@@ -832,7 +836,14 @@ describe("operación y seguridad", () => {
 describe("higiene del repositorio", () => {
   test("los archivos fuente de texto no contienen espacios finales", async () => {
     const ignoredDirectories = new Set([".git", "node_modules"]);
-    const ignoredFiles = new Set(["assets/film-layer.js"]);
+    // Los textos de licencia se distribuyen tal cual los publica su autor: la
+    // OFL exige acompañar la licencia, no una versión reformateada por nosotros.
+    const ignoredFiles = new Set([
+      "assets/film-layer.js",
+      "assets/fonts/OFL-Archivo.txt",
+      "assets/fonts/OFL-Newsreader.txt",
+      "assets/fonts/OFL-JetBrainsMono.txt"
+    ]);
     const textExtensions = new Set([
       ".css",
       ".html",

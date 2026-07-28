@@ -6,9 +6,14 @@ const root = join(import.meta.dir, "..");
 const read = (path) => readFile(join(root, path), "utf8");
 
 /**
- * En var(--condensed) la tinta de una mayúscula acentuada sube 0.91em sobre la
- * línea base, contra 0.72em de una mayúscula sin tilde. Medido en el navegador
+ * En var(--condensed) la tinta de una mayúscula acentuada sube 0.885em sobre la
+ * línea base, contra 0.688em de una mayúscula sin tilde. Medido en el navegador
  * con TextMetrics.actualBoundingBoxAscent sobre "Á" a 144px.
+ *
+ * La medida es de Archivo, que el sitio sirve desde assets/fonts/. Antes era
+ * 0.91 y describía "Arial Narrow", una fuente del sistema del visitante: el
+ * umbral cambiaba según quién abriera la página y no había forma de fijarlo.
+ * Si algún día se cambia la familia condensada hay que volver a medir.
  *
  * Con un interlineado menor, la tilde de una línea entra en el cuerpo de las
  * letras de la línea anterior y se vuelve invisible: tinta sobre tinta. No es
@@ -19,7 +24,7 @@ const read = (path) => readFile(join(root, path), "utf8");
  * "NADA AQUÍ ESTA INMOVIL." en /laboratorio/, y "Aquí se ve cómo se construye."
  * perdía la tilde de CÓMO en móvil, donde la palabra cae a la segunda línea.
  */
-const ASCENSO_MAYUSCULA_ACENTUADA = 0.91;
+const ASCENSO_MAYUSCULA_ACENTUADA = 0.885;
 
 // Único titular exento: una sola palabra, sin tildes, imposible de partir en
 // dos líneas y por lo tanto incapaz de colisionar consigo mismo.

@@ -1,3 +1,52 @@
+/* Tipografías propias, servidas desde este dominio.
+   Antes el sitio no cargaba ninguna: pedía "Arial Narrow" e "Iowan Old Style",
+   que solo existen en Mac (y a medias en Windows). En Android no existe ninguna
+   de las dos, así que la identidad completa se caía a Roboto y Times. Lo que se
+   veía dependía del sistema operativo del visitante.
+
+   Archivo cubre display, navegación y etiquetas con un solo archivo variable:
+   el eje de ancho fijado en 72% calca el ancho de "Arial Narrow" al pixel
+   (1565px contra 1566px midiendo el titular real a 144px), así que la
+   composición existente no se mueve. La misma familia sin fijar el ancho sirve
+   de sans neutra, sin descargar un segundo archivo.
+
+   Las tres son SIL Open Font License; el texto de cada licencia acompaña a los
+   archivos en assets/fonts/. */
+
+@font-face {
+  font-family: "Archivo Cond";
+  src: url("/assets/fonts/archivo-variable.woff2") format("woff2");
+  font-weight: 400 900;
+  font-stretch: 72%; /* fija el eje de ancho: sobrevive al atajo font: */
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Archivo";
+  src: url("/assets/fonts/archivo-variable.woff2") format("woff2");
+  font-weight: 400 900;
+  font-stretch: 62% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Newsreader";
+  src: url("/assets/fonts/newsreader-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/assets/fonts/jetbrainsmono-variable.woff2") format("woff2");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --black: #050505;
   --black-soft: #0c0c0b;
@@ -12,15 +61,21 @@
   --line-ink: rgba(17, 18, 16, 0.24);
   --page-x: clamp(1.25rem, 4vw, 4rem);
   --max: 1440px;
-  --serif: "Iowan Old Style", "Baskerville", "Times New Roman", serif;
-  --condensed: "Arial Narrow", "Avenir Next Condensed", "Helvetica Neue", Arial, sans-serif;
-  --mono: "SFMono-Regular", "Roboto Mono", "Liberation Mono", "Courier New", monospace;
-  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  /* En var(--condensed), la tinta de una mayúscula acentuada sube 0.91em sobre la
-     línea base (Á/É/Í/Ó/Ú), contra 0.72em de una mayúscula sin tilde. Con un
-     interlineado menor, la tilde de una línea invade las letras de la línea
+  /* Las familias del sistema quedan detrás como red: si un woff2 no llega, el
+     sitio cae a lo que se veía antes, no a un default del navegador. */
+  --serif: "Newsreader", "Iowan Old Style", "Baskerville", "Times New Roman", serif;
+  --condensed: "Archivo Cond", "Arial Narrow", "Avenir Next Condensed", "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", "SFMono-Regular", "Roboto Mono", "Liberation Mono", "Courier New", monospace;
+  --sans: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* En var(--condensed), la tinta de una mayúscula acentuada sube 0.885em sobre
+     la línea base (Á/É/Í/Ó/Ú/Ñ), contra 0.688em de una mayúscula sin tilde. Con
+     un interlineado menor, la tilde de una línea invade las letras de la línea
      anterior y desaparece: negro sobre negro. Cualquier titular en mayúsculas
-     que pueda ocupar dos líneas usa este mínimo. */
+     que pueda ocupar dos líneas usa este mínimo.
+
+     Medido sobre Archivo, que ahora viaja con el sitio. Antes la medida era
+     0.91 y era propiedad de "Arial Narrow", una fuente del sistema del
+     visitante: el umbral cambiaba según quién abriera la página. */
   --display-leading: 0.95;
   color-scheme: dark;
   font-family: var(--sans);

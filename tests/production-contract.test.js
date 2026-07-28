@@ -46,8 +46,10 @@ describe("contrato productivo de Nginx", () => {
       "COPY --chown=nginx:nginx assets/ /usr/share/nginx/html/assets/"
     );
     expect(nginx).toContain("(?:css|js|svg|png|webp)");
+    // woff2 se suma a los formatos servidos desde que las tipografías viajan
+    // con el sitio en lugar de pedirse al sistema del visitante.
     expect(nginx).toMatch(
-      /location ~\* \\\.\(\?:css\|js\|svg\|png\|webp\)\$/
+      /location ~\* \\\.\(\?:css\|js\|svg\|png\|webp\|woff2\)\$/
     );
     expect(nginx).toContain("try_files $uri $uri/ =404");
   });
