@@ -149,6 +149,34 @@ describe("endpoint de contacto", () => {
 });
 
 describe("formulario y páginas de acuse", () => {
+  test("el formulario envía como POST nativo al endpoint", async () => {
+    const html = await read("index.html");
+
+    expect(html).toContain('action="/api/contacto"');
+    expect(html).toContain('method="post"');
+    // Sin fetch: la CSP declara connect-src 'none' y el formulario debe
+    // funcionar con JavaScript desactivado.
+    expect(html).not.toMatch(/fetch\(\s*["']\/api\/contacto/);
+
+    for (const campo of ["nombre", "correo", "mensaje"]) {
+      expect(html).toContain(`name="${campo}"`);
+      expect(html).toContain(`for="${campo}"`);
+    }
+  });
+
+  test("la trampa existe, está fuera del alcance y no se anuncia", async () => {
+    const [html, css] = await Promise.all([read("index.html"), read("styles.css")]);
+
+    expect(html).toContain('name="empresa"');
+    expect(html).toContain('tabindex="-1"');
+    expect(html).toContain('class="contact-trampa" aria-hidden="true"');
+
+    // Ocultarla con display:none la delata: muchos rellenadores lo detectan.
+    const regla = css.match(/\.contact-trampa\s*\{([^}]*)\}/)[1];
+    expect(regla).not.toContain("display: none");
+    expect(regla).toContain("left: -9999px");
+  });
+
   test("existen las dos páginas de acuse y no se indexan", async () => {
     for (const ruta of ["gracias/index.html", "gracias/no-enviado/index.html"]) {
       const html = await read(ruta);

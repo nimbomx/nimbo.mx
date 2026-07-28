@@ -224,6 +224,28 @@
       <h2 id="contact-title">La siguiente escena puede empezar con una pregunta.</h2>
       <p>Cuéntanos qué estás intentando construir, dónde se detuvo o qué todavía no puedes explicar con claridad.</p>
       <p class="contact-pace">Un correo, sin prisa. Lo que construimos rara vez se define en dos mensajes, así que preferimos empezar leyendo bien lo que necesitas.</p>
+
+      <form class="contact-form" action="/api/contacto" method="post" novalidate>
+        <p class="contact-field">
+          <label for="nombre">Nombre</label>
+          <input id="nombre" name="nombre" type="text" maxlength="120" required autocomplete="name">
+        </p>
+        <p class="contact-field">
+          <label for="correo">Correo</label>
+          <input id="correo" name="correo" type="email" maxlength="254" required autocomplete="email">
+        </p>
+        <p class="contact-field contact-field--ancho">
+          <label for="mensaje">Qué estás intentando construir</label>
+          <textarea id="mensaje" name="mensaje" rows="5" maxlength="5000" required></textarea>
+        </p>
+        <p class="contact-trampa" aria-hidden="true">
+          <label for="empresa">No llenes este campo</label>
+          <input id="empresa" name="empresa" type="text" tabindex="-1" autocomplete="off">
+        </p>
+        <p class="contact-envio">
+          <button class="action-link action-link--ink" type="submit">Enviar <span aria-hidden="true">→</span></button>
+        </p>
+      </form>
       <a class="credits-mail" href="mailto:contacto@nimbo.mx">
         <span>contacto@nimbo.mx</span>
         <span aria-hidden="true">↗</span>
