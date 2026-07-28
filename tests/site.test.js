@@ -93,7 +93,7 @@ describe("estructura editorial", () => {
       read("laboratorio/nimbo-pro/index.html")
     ]);
 
-    expect(laboratory).toContain("Nada aquí está inmóvil.");
+    expect(laboratory).toContain("El archivo, expediente por expediente.");
     expect(laboratory).toContain("Expediente 001 · En curso");
     expect(laboratory).toContain("Telegram · en trabajo");
     expect(laboratory).toContain("WhatsApp · siguiente");
