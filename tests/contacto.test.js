@@ -219,3 +219,71 @@ describe("formulario y páginas de acuse", () => {
     expect(instrucciones).not.toMatch(/^RUN .*bun install/m);
   });
 });
+
+describe("aviso por Telegram", () => {
+  test("avisa con el texto sin interpretar y sin vista previa", async () => {
+    let capturado = null;
+
+    const sustituto = Bun.serve({
+      port: 0,
+      async fetch(peticion) {
+        capturado = { ruta: new URL(peticion.url).pathname, cuerpo: await peticion.json() };
+        return Response.json({ ok: true, result: { message_id: 1 } });
+      }
+    });
+
+    const puerto = 8990 + Math.floor(Math.random() * 9);
+    const archivoAviso = join(carpeta, "avisos.jsonl");
+    const servicio = Bun.spawn(["bun", "run", "contacto/servidor.js"], {
+      cwd: root,
+      env: {
+        ...process.env,
+        PORT: String(puerto),
+        ARCHIVO_MENSAJES: archivoAviso,
+        ORIGEN_PUBLICO: "https://nimbo.mx",
+        TELEGRAM_BOT_TOKEN: "123:PRUEBA",
+        TELEGRAM_CHAT_ID: "-100999",
+        TELEGRAM_API_BASE: `http://127.0.0.1:${sustituto.port}`,
+        RESEND_API_KEY: ""
+      },
+      stdout: "pipe",
+      stderr: "pipe"
+    });
+
+    try {
+      for (let i = 0; i < 50; i += 1) {
+        try {
+          if ((await fetch(`http://127.0.0.1:${puerto}/salud`)).ok) break;
+        } catch { /* todavía no levanta */ }
+        await Bun.sleep(100);
+      }
+
+      await fetch(`http://127.0.0.1:${puerto}/api/contacto`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          nombre: "Ana Ruiz",
+          correo: "ana@ejemplo.com",
+          mensaje: "Texto con *asteriscos* y [enlace](http://ejemplo.test)."
+        }).toString(),
+        redirect: "manual"
+      });
+
+      for (let i = 0; i < 30 && !capturado; i += 1) await Bun.sleep(100);
+
+      expect(capturado).not.toBeNull();
+      expect(capturado.ruta).toBe("/bot123:PRUEBA/sendMessage");
+      expect(capturado.cuerpo.chat_id).toBe("-100999");
+      expect(capturado.cuerpo.disable_web_page_preview).toBe(true);
+
+      // Lo escribe un desconocido: con parse_mode, un asterisco descolocado
+      // rompe el envío y un enlace disfrazado llega como enlace real.
+      expect(capturado.cuerpo.parse_mode).toBeUndefined();
+      expect(capturado.cuerpo.text).toContain("*asteriscos*");
+      expect(capturado.cuerpo.text).toContain("ana@ejemplo.com");
+    } finally {
+      servicio.kill();
+      sustituto.stop(true);
+    }
+  });
+});

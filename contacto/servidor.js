@@ -6,9 +6,9 @@
  * funciona con JavaScript desactivado y responde con un 303 hacia una página de
  * acuse, que es el comportamiento correcto de un POST.
  *
- * Cada mensaje se escribe primero en disco y solo después se intenta enviar por
- * correo. Si el correo falla, el mensaje ya está guardado: una caída del SMTP
- * nunca puede perder a alguien que escribió.
+ * Cada mensaje se escribe primero en disco y solo después se avisa. Si el aviso
+ * falla, el mensaje ya está guardado: una caída de Telegram o de Resend nunca
+ * puede perder a alguien que escribió.
  */
 
 import { appendFile, mkdir } from "node:fs/promises";
@@ -83,6 +83,55 @@ const acuse = (estado) =>
   });
 
 /**
+ * Aviso por Telegram, reutilizando el bot y el chat de bandeja que nimbo.pro
+ * ya tiene en funcionamiento. Es el canal que hoy puede avisar de verdad: el
+ * correo espera a que nimbo.pro esté verificado como dominio en Resend.
+ *
+ * El texto va SIN parse_mode a propósito. Lo escribe un desconocido, y cualquier
+ * modo de formato convertiría su mensaje en marcado: un asterisco descolocado
+ * rompería el envío, y un enlace disfrazado llegaría como enlace real.
+ */
+const enviarPorTelegram = async (mensaje) => {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chat = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chat) return { canal: "telegram", enviado: false, motivo: "no_configurado" };
+
+  // El origen es configurable solo para que las pruebas puedan comprobar el
+  // envío real contra un sustituto, en lugar de conformarse con leer el código.
+  const origen = process.env.TELEGRAM_API_BASE || "https://api.telegram.org";
+
+  try {
+    const respuesta = await fetch(`${origen}/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(10_000),
+      body: JSON.stringify({
+        chat_id: chat,
+        disable_web_page_preview: true,
+        text:
+          `nimbo.mx · formulario de contacto\n\n` +
+          `${mensaje.nombre}\n${mensaje.correo}\n\n` +
+          `${mensaje.mensaje}\n\n` +
+          `Recibido ${mensaje.recibido}`
+      })
+    });
+
+    if (respuesta.ok) return { canal: "telegram", enviado: true };
+
+    const detalle = await respuesta.text();
+    return {
+      canal: "telegram",
+      enviado: false,
+      motivo: `telegram_${respuesta.status}`,
+      // El token va en la URL, no en el cuerpo del error: es seguro conservarlo.
+      detalle: detalle.slice(0, 300)
+    };
+  } catch (error) {
+    return { canal: "telegram", enviado: false, motivo: error?.name || "error_de_red" };
+  }
+};
+
+/**
  * Envío por Resend, que es una petición HTTPS y no necesita biblioteca.
  *
  * Se descartó SMTP: la cuenta de correo de nimbo.mx está en Google, que exige
@@ -96,9 +145,9 @@ const acuse = (estado) =>
  */
 const RESEND = "https://api.resend.com/emails";
 
-const enviarCorreo = async (mensaje) => {
+const enviarPorCorreo = async (mensaje) => {
   const clave = process.env.RESEND_API_KEY;
-  if (!clave) return { enviado: false, motivo: "resend_no_configurado" };
+  if (!clave) return { canal: "correo", enviado: false, motivo: "no_configurado" };
 
   const control = AbortSignal.timeout(10_000);
 
@@ -119,20 +168,46 @@ const enviarCorreo = async (mensaje) => {
       })
     });
 
-    if (respuesta.ok) return { enviado: true };
+    if (respuesta.ok) return { canal: "correo", enviado: true };
 
     // El cuerpo del error de Resend es descriptivo y no trae credenciales:
     // conservarlo es lo que permite distinguir un dominio sin verificar de una
     // clave revocada sin tener que reproducir el fallo.
     const detalle = await respuesta.text();
     return {
+      canal: "correo",
       enviado: false,
       motivo: `resend_${respuesta.status}`,
       detalle: detalle.slice(0, 300)
     };
   } catch (error) {
-    return { enviado: false, motivo: error?.name || "error_de_red" };
+    return { canal: "correo", enviado: false, motivo: error?.name || "error_de_red" };
   }
+};
+
+/**
+ * Se avisa por todos los canales configurados, no por el primero que funcione:
+ * si mañana se añade el correo, empieza a llegar por los dos sin tocar código.
+ * Los avisos corren en paralelo y ninguno puede tumbar la respuesta —el mensaje
+ * ya está guardado antes de llegar aquí—, así que sus fallos solo se registran.
+ */
+const avisar = async (mensaje) => {
+  const resultados = await Promise.all([
+    enviarPorTelegram(mensaje),
+    enviarPorCorreo(mensaje)
+  ]);
+
+  const entregados = resultados.filter((r) => r.enviado).map((r) => r.canal);
+  if (entregados.length === 0) {
+    console.warn(
+      "mensaje guardado sin avisar:",
+      resultados.map((r) => `${r.canal}=${r.motivo}${r.detalle ? ` (${r.detalle})` : ""}`).join(" ")
+    );
+  } else {
+    console.log("aviso entregado por:", entregados.join(", "));
+  }
+
+  return resultados;
 };
 
 // Append de una sola línea, sin leer lo ya escrito. Reescribir el archivo
@@ -223,10 +298,7 @@ const servidor = Bun.serve({
       return acuse("error");
     }
 
-    const correoResultado = await enviarCorreo(registro);
-    if (!correoResultado.enviado) {
-      console.warn("mensaje guardado sin enviar por correo:", correoResultado.motivo);
-    }
+    await avisar(registro);
 
     return acuse("recibido");
   }
